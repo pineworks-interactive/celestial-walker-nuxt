@@ -1,2 +1,138 @@
 @import "tailwindcss";
-@import "nuxt/ui";
+@import "@nuxt/ui";
+
+@theme static {
+  --font-sans: 'Public Sans', sans-serif;
+
+  --breakpoint-xs: 20rem; /* 320px */
+  --breakpoint-sm: 40rem; /* 640px */
+  --breakpoint-md: 48rem; /* 768px */
+  --breakpoint-lg: 64rem; /* 1024px */
+  --breakpoint-xl: 80rem; /* 1280px */
+  --breakpoint-2xl: 96rem; /* 1536px */
+  --breakpoint-3xl: 120rem; /* 1920px */
+
+  --color-greeen-100: #d7ffec;
+  --color-greeen-200: #b2ffd9;
+  --color-greeen-300: #77febd;
+  --color-greeen-400: #37f499;
+  --color-greeen-500: #0add78;
+  --color-greeen-600: #01b861;
+  --color-greeen-700: #05904e;
+  --color-greeen-800: #0a7141;
+  --color-greeen-900: #0b5c37;
+
+  --color-purpl-100: #ede9fe;
+  --color-purpl-200: #dcd5ff;
+  --color-purpl-300: #c2b4fe;
+  --color-purpl-400: #987afb;
+  --color-purpl-500: #875af8;
+  --color-purpl-600: #7738ef;
+  --color-purpl-700: #6826db;
+  --color-purpl-800: #581fb8;
+  --color-purpl-900: #4a1b97;
+
+  --color-pink-100: #fde6ff;
+  --color-pink-200: #fdccff;
+  --color-pink-300: #fea3ff;
+  --color-pink-400: #ff6dff;
+  --color-pink-500: #f94dff;
+  --color-pink-600: #e116e3;
+  --color-pink-700: #bd0ebc;
+  --color-pink-800: #9a0e97;
+  --color-pink-900: #7e1179;
+
+  --color-yelllow-100: #f6fdc4;
+  --color-yelllow-200: #f1fc79;
+  --color-yelllow-300: #f4fb49;
+  --color-yelllow-400: #f6f718;
+  --color-yelllow-500: #e7de0b;
+  --color-yelllow-600: #c7b007;
+  --color-yelllow-700: #9f8109;
+  --color-yelllow-800: #836510;
+  --color-yelllow-900: #705213;
+
+  --color-lblue-100: #ccfbff;
+  --color-lblue-200: #9ff4ff;
+  --color-lblue-300: #5eeaff;
+  --color-lblue-400: #04d1f9;
+  --color-lblue-500: #00b8e1;
+  --color-lblue-600: #0092bd;
+  --color-lblue-700: #067498;
+  --color-lblue-800: #0f5e7b;
+  --color-lblue-900: #114d68;
+
+  --color-slate-100: #ecf0f3;
+  --color-slate-200: #dde2e8;
+  --color-slate-300: #c7cfda;
+  --color-slate-400: #a5afc2;
+  --color-slate-500: #9ba3b9;
+  --color-slate-600: #848ba7;
+  --color-slate-700: #717691;
+  --color-slate-800: #5d6176;
+  --color-slate-900: #4f5360;
+}
+
+:root {
+  --color-primary: var(--color-greeen-500);
+  --color-secondary: var(--color-purpl-500);
+  --color-tertiary: var(--color-pink-500);
+  --color-quaternary: var(--color-yelllow-500);
+  --color-quinary: var(--color-lblue-500);
+  --color-neutral: var(--color-slate-500);
+  --color-success: var(--color-green-500);
+  --color-warning: var(--color-yellow-500);
+  --color-error: var(--color-red-500);
+  --color-info: var(--color-blue-500);
+}
+
+.dark {
+  --color-primary: var(--color-greeen-400);
+  --color-secondary: var(--color-purpl-400);
+  --color-tertiary: var(--color-pink-400);
+  --color-quaternary: var(--color-yelllow-400);
+  --color-quinary: var(--color-lblue-400);
+  --color-neutral: var(--color-slate-400);
+  --color-success: var(--color-green-400);
+  --color-warning: var(--color-yellow-400);
+  --color-error: var(--color-red-400);
+  --color-info: var(--color-blue-400);
+}
+
+body {
+  margin: 1rem;
+  background-color: var(--color-black);
+}
+
+/* Custom Button Styles */
+/* Color variables for dynamic button hover effects */
+.custom-button-hover[data-color="primary"] {
+  --hover-bg: var(--color-primary);
+}
+
+.custom-button-hover[data-color="secondary"] {
+  --hover-bg: var(--color-secondary);
+}
+
+.custom-button-hover[data-color="tertiary"] {
+  --hover-bg: var(--color-tertiary);
+}
+
+.custom-button-hover[data-color="quaternary"] {
+  --hover-bg: var(--color-quaternary);
+}
+
+.custom-button-hover[data-color="quinary"] {
+  --hover-bg: var(--color-quinary);
+}
+
+.custom-button-hover[data-color="neutral"] {
+  --hover-bg: var(--color-neutral);
+}
+
+/* Outline-to-solid hover effect */
+.custom-button-hover:hover {
+  background-color: var(--hover-bg) !important;
+  color: black !important;
+  border-color: var(--hover-bg) !important;
+}
