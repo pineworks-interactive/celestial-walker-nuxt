@@ -100,12 +100,12 @@
 }
 
 body {
-  margin: 1rem;
+  margin: 2rem;
   background-color: var(--color-black);
 }
 
 /* Custom Button Styles */
-/* Color variables for dynamic button hover effects */
+/* Color variables for button hover */
 .custom-button-hover[data-color="primary"] {
   --hover-bg: var(--color-primary);
 }
@@ -130,7 +130,7 @@ body {
   --hover-bg: var(--color-neutral);
 }
 
-/* Outline-to-solid hover effect */
+/* Outline-to-solid hover */
 .custom-button-hover:hover {
   background-color: var(--hover-bg) !important;
   color: black !important;
