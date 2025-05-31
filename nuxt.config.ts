@@ -17,6 +17,23 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/scripts',
     '@nuxt/test-utils',
-    '@nuxt/ui'
-  ]
+    '@nuxt/ui',
+  ],
+
+  ui: {
+    theme: {
+      colors: [
+        'primary',
+        'secondary',
+        'tertiary',
+        'quaternary',
+        'quinary',
+        'success',
+        'warning',
+        'error',
+        'info',
+        'neutral',
+      ],
+    },
+  },
 })
