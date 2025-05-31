@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue'
+import { useThreeSceneManager } from '@/composables/useThreeSceneManager'
+
+const { scene, camera, renderer, isInitialized } = useThreeSceneManager({
+  containerId: 'canvas',
+  fov: 75,
+  near: 0.1,
+  far: 1000,
+})
 </script>
 
 <template>
@@ -14,9 +22,14 @@ import Button from '@/components/ui/Button.vue'
   <div class="mt-4">
     <Button to="/" label="Back Home" color="tertiary" icon="solar:alt-arrow-left-bold-duotone" />
   </div>
-  <canvas id="canvas" />
+  <canvas id="canvas" class="w-full h-screen" />
 </template>
 
 <style scoped>
-
+#canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
 </style>
