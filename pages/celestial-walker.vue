@@ -14,6 +14,7 @@ import Button from '@/components/ui/Button.vue'
   <div class="mt-4">
     <Button to="/" label="Back Home" color="tertiary" icon="solar:alt-arrow-left-bold-duotone" />
   </div>
+  <canvas id="canvas" />
 </template>
 
 <style scoped>
