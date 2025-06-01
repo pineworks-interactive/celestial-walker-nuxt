@@ -16,6 +16,17 @@ export const rendererConfig = {
   antialias: true,
 }
 
+export const rendererProps = {
+  backgroundColor: colors.black,
+}
+
+export const sceneConfig = {
+  fov: 75,
+  near: 0.1,
+  far: 5000,
+  containerId: 'canvas',
+}
+
 export const controlsConfig = {
   enableDamping: true,
   dampingFactor: 0.05,
@@ -28,4 +39,12 @@ export const controlsConfig = {
 export const ambientLightConfig = {
   color: colors.white,
   intensity: 0.5,
+}
+
+export const starfieldConfig = {
+  count: 3000,
+  size: 5,
+  minDistance: 4000,
+  maxDistance: 4999,
+  color: colors.white,
 }

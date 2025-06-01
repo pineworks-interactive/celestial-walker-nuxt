@@ -11,10 +11,18 @@ export interface SceneManagerOptions {
 export interface SceneManager {
   scene: Scene
   camera: PerspectiveCamera
-  renderer: WebGLRenderer
-  controls: OrbitControls
+  renderer: WebGLRenderer | null
+  controls: OrbitControls | null
   isInitialized: boolean
   init: () => void
   dispose: () => void
   animate: () => void
+}
+
+export interface StarfieldOptions {
+  count: number
+  size: number
+  minDistance: number
+  maxDistance: number
+  color: number
 }
