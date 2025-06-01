@@ -14,6 +14,7 @@ import {
   cameraInitialPosition,
   controlsConfig,
   rendererConfig,
+  rendererProps,
 } from '~/configs/scene.config'
 
 /**
@@ -27,20 +28,13 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   const scene = new Scene()
   const camera = new PerspectiveCamera(
     options.fov ?? cameraConfigDefault.fov,
-    window.innerWidth / window.innerHeight,
+    1, // window.innerWidth / window.innerHeight does not work here
     options.near ?? cameraConfigDefault.near,
     options.far ?? cameraConfigDefault.far,
   )
-  const renderer = new WebGLRenderer(rendererConfig)
 
-  // * Controls
-  const controls = new OrbitControls(camera, renderer.domElement)
-  controls.enableDamping = controlsConfig.enableDamping // smoothing camera movement
-  controls.dampingFactor = controlsConfig.dampingFactor
-  controls.screenSpacePanning = controlsConfig.screenSpacePanning
-  controls.minDistance = controlsConfig.minDistance
-  controls.maxDistance = controlsConfig.maxDistance
-  controls.maxPolarAngle = controlsConfig.maxPolarAngle // prevent camera from flipping upside down
+  let renderer: WebGLRenderer | null = null
+  let controls: OrbitControls | null = null
 
   // * State management
   const isInitialized = ref(false)
@@ -53,17 +47,35 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     if (isInitialized.value)
       return
 
-    // * Renderer setup
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(window.devicePixelRatio)
+    const canvasElement = document.getElementById(options.containerId) as HTMLCanvasElement | null
 
-    // add renderer to the DOM
-    const container = document.getElementById(options.containerId)
-    if (!container) {
-      console.error(`Container with id ${options.containerId} not found`)
+    if (!canvasElement) {
+      console.error(`Canvas element with id ${options.containerId} not found`)
       return
     }
-    container.appendChild(renderer.domElement)
+
+    // * Renderer setup
+    renderer = new WebGLRenderer({ ...rendererConfig, canvas: canvasElement })
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setClearColor(rendererProps.backgroundColor)
+
+    // add renderer to the DOM
+    // const container = document.getElementById(options.containerId)
+    // if (!container) {
+    //   console.error(`Container with id ${options.containerId} not found`)
+    //   return
+    // }
+    // container.appendChild(renderer.domElement)
+
+    // * Controls
+    controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = controlsConfig.enableDamping // smoothing camera movement
+    controls.dampingFactor = controlsConfig.dampingFactor
+    controls.screenSpacePanning = controlsConfig.screenSpacePanning
+    controls.minDistance = controlsConfig.minDistance
+    controls.maxDistance = controlsConfig.maxDistance
+    controls.maxPolarAngle = controlsConfig.maxPolarAngle // prevent camera from flipping upside down
 
     // * Camera setup
     camera.position.set(
@@ -71,6 +83,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       cameraInitialPosition.y,
       cameraInitialPosition.z,
     )
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
 
     // * Ambient lighting
     const ambientLight = new AmbientLight(
@@ -97,7 +111,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
-    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer?.setSize(window.innerWidth, window.innerHeight)
   }
 
   /**
@@ -108,8 +122,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       return
 
     animationFrameId = requestAnimationFrame(animate)
-    controls.update()
-    renderer.render(scene, camera)
+    controls?.update()
+    renderer?.render(scene, camera)
   }
 
   /**
@@ -129,7 +143,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     window.removeEventListener('resize', handleResize)
 
     // dispose of controls
-    controls.dispose()
+    controls?.dispose()
 
     // dispose of three.js resources
     scene.traverse((element) => {
@@ -145,12 +159,12 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     })
 
     // remove renderer from the DOM
-    const container = document.getElementById(options.containerId)
-    if (container) {
-      container.removeChild(renderer.domElement)
-    }
+    // const container = document.getElementById(options.containerId)
+    // if (container && renderer && renderer.domElement) {
+    //   container.removeChild(renderer.domElement)
+    // }
 
-    renderer.dispose()
+    renderer?.dispose()
     isInitialized.value = false
   }
 
