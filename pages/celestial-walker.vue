@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue'
+import { useStarfield } from '@/composables/useStarfield'
 import { useThreeSceneManager } from '@/composables/useThreeSceneManager'
+import { sceneConfig, starfieldConfig } from '@/configs/scene.config'
 
-const { scene, camera, renderer, isInitialized } = useThreeSceneManager({
-  containerId: 'canvas',
-  fov: 75,
-  near: 0.1,
-  far: 1000,
-})
+const { scene, camera, renderer, isInitialized } = useThreeSceneManager(sceneConfig)
+
+const { starfield } = useStarfield(scene, starfieldConfig)
 </script>
 
 <template>
-  <div>
+  <!-- <div>
     <h1 class="text-lg font-bold underline">
       Celestial Walker
     </h1>
@@ -21,7 +20,7 @@ const { scene, camera, renderer, isInitialized } = useThreeSceneManager({
   </div>
   <div class="mt-4">
     <Button to="/" label="Back Home" color="tertiary" icon="solar:alt-arrow-left-bold-duotone" />
-  </div>
+  </div> -->
   <canvas id="canvas" class="w-full h-screen" />
 </template>
 
@@ -30,6 +29,6 @@ const { scene, camera, renderer, isInitialized } = useThreeSceneManager({
   position: fixed;
   top: 0;
   left: 0;
-  z-index: -1;
+  /* z-index: -1; */
 }
 </style>
