@@ -1,12 +1,8 @@
 <script setup lang="ts">
-import Button from '@/components/ui/Button.vue'
-import { useStarfield } from '@/composables/useStarfield'
 import { useThreeSceneManager } from '@/composables/useThreeSceneManager'
-import { sceneConfig, starfieldConfig } from '@/configs/scene.config'
+import { sceneConfig } from '@/configs/scene.config'
 
-const { scene, camera, renderer, isInitialized } = useThreeSceneManager(sceneConfig)
-
-const { starfield } = useStarfield(scene, starfieldConfig)
+useThreeSceneManager(sceneConfig)
 </script>
 
 <template>
@@ -29,6 +25,8 @@ const { starfield } = useStarfield(scene, starfieldConfig)
   position: fixed;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
   /* z-index: -1; */
 }
 </style>
