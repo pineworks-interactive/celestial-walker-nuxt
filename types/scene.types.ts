@@ -13,10 +13,10 @@ export interface SceneManager {
   camera: PerspectiveCamera
   renderer: WebGLRenderer | null
   controls: OrbitControls | null
-  isInitialized: boolean
+  isSceneBaseInit: Ref<boolean>
+  isSceneContentsInit: Ref<boolean>
   init: () => void
   dispose: () => void
-  animate: () => void
 }
 
 export interface StarfieldOptions {
