@@ -14,9 +14,9 @@
       "normal": ""
     },
     "physicalProps": {
-      "meanRadius": "696,340",
+      "meanRadius": "696340",
       "meanRadiusUnit": "km",
-      "polarRadius": "699,110",
+      "polarRadius": "699110",
       "polarRadiusUnit": "km",
       "axialTilt": "7.25",
       "axialTiltUnit": "degrees",
