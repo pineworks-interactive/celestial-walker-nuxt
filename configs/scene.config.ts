@@ -8,8 +8,8 @@ export const cameraConfigDefault = {
 
 export const cameraInitialPosition = {
   x: 0,
-  y: 20000,
-  z: 180000,
+  y: 75,
+  z: 1000,
 }
 
 export const rendererConfig = {
@@ -32,7 +32,7 @@ export const controlsConfig = {
   dampingFactor: 0.05,
   screenSpacePanning: true,
   minDistance: 0.1,
-  maxDistance: 1000,
+  maxDistance: 10000,
   maxPolarAngle: Math.PI / 2,
 }
 
