@@ -2,6 +2,7 @@ import type { CelestialBody, Planet, Sun } from '@/types/solarSystem.types'
 import * as THREE from 'three'
 import { ref } from 'vue'
 import { colors } from '@/configs/colors.config'
+import { kmPerAu, scaleFactors } from '@/configs/scaling.config'
 
 export function useCelestialBodyFactory() {
   // * Store created meshes (cleanup)
@@ -12,15 +13,15 @@ export function useCelestialBodyFactory() {
    * @param radius - Radius of the sphere in km
    * @param segments - Number of segments for the sphere
    */
-  const createSphereGeometry = (radius: number, segments: number, planetName?: string) => {
+  const createSphereGeometry = (radiusKm: number, segments: number, _planetName?: string) => {
     // * We need to convert km unit to 3JS units and apply a scale factor
-    let scaledRadius = radius / 1000
+    const scaledRadius = radiusKm / scaleFactors.celestialBodyKmPerUnit
 
-    // TEMPORARY: Make Earth much larger for debugging
-    if (planetName && planetName.toLowerCase() === 'earth') {
-      scaledRadius *= 500 // 500x bigger
-      console.warn(`DEBUG: Earth's scaledRadius temporarily increased to: ${scaledRadius}`)
-    }
+    // // TEMPORARY: Make Earth larger for debugging
+    // if (planetName && planetName.toLowerCase() === 'earth') {
+    //   scaledRadius *= 500 // 500x bigger
+    //   console.warn(`DEBUG: Earth's scaledRadius temporarily increased to: ${scaledRadius}`)
+    // }
 
     const geometry = new THREE.SphereGeometry(scaledRadius, segments, segments)
     return geometry
@@ -61,7 +62,7 @@ export function useCelestialBodyFactory() {
    */
   const createCelestialBody = async (body: CelestialBody): Promise<THREE.Mesh> => {
     const radius = Number.parseFloat(body.physicalProps.meanRadius)
-    const geometry = createSphereGeometry(radius, 32, body.name)
+    const geometry = createSphereGeometry(radius, 32)
     const material = await createBasicMaterial(body.textures.main)
 
     const mesh = new THREE.Mesh(geometry, material)
@@ -96,27 +97,50 @@ export function useCelestialBodyFactory() {
     const planetMaterial = planetMesh.material as THREE.MeshStandardMaterial
     planetMaterial.roughness = 0.8
     planetMaterial.metalness = 0.2
-    // TEMPORARY: Make Earth emissive for debugging
-    if (planetData.name.toLowerCase() === 'earth') {
-      planetMaterial.emissive = new THREE.Color(colors.blue) // Bright blue for Earth
-      planetMaterial.emissiveIntensity = 2.0 // Make it quite bright
-      planetMaterial.needsUpdate = true // Ensure material update
-    }
+    // // TEMPORARY: Make Earth emissive for debugging
+    // if (planetData.name.toLowerCase() === 'earth') {
+    //   planetMaterial.emissive = new THREE.Color(colors.blue) // Bright blue for Earth
+    //   planetMaterial.emissiveIntensity = 2.0 // Make it quite bright
+    //   planetMaterial.needsUpdate = true // Ensure material update
+    // }
 
     return planetMesh
   }
 
   /**
-   * ?Creates a simple circular orbit
-   * @param radius - Orbit radius in km
+   * ? Creates a simple circular orbit
+   * @param centerToCenterDistanceKm - Orbital distance from center of central body to center of orbiting body in km
+   * @param centralBodyScaledRadius - Scaled radius of the central body in 3JS units
    * @param speed - Orbit speed in degrees per frame
    */
-  const createOrbit = (radius: number, speed: number = 0.1): THREE.Object3D => {
+  const createOrbit = (
+    centerToCenterDistanceKm: number,
+    centralBodyScaledRadius: number = 0, // default to 0 if no offset needed
+    speed: number = 0.1,
+  ): THREE.Object3D => {
     const orbit = new THREE.Object3D()
+
+    // * Scale the planet's astronomical orbital distance (center-to-center)
+    const planetOrbitalRadiusAu = centerToCenterDistanceKm / kmPerAu
+    const planetScaledOrbitalRadius = planetOrbitalRadiusAu / scaleFactors.orbitalDistanceAuPerUnit
+
+    // *Planet's own scaled orbital distance + scaled radius of the central body's mesh.
+    const finalEffectiveScaledRadius = planetScaledOrbitalRadius + centralBodyScaledRadius
+
     orbit.userData = {
-      orbitRadius: radius / 1000,
+      orbitRadius: finalEffectiveScaledRadius,
       orbitSpeed: speed,
+      // store originals for debugging purposes
+      planetAstronomicalOrbitalDistanceKm: centerToCenterDistanceKm,
+      planetScaledOrbitalRadius, // scaled orbit before offset
+      centralBodyScaledRadiusOffset: centralBodyScaledRadius, // added offset
     }
+    console.log(`Creating orbit:
+      Planet Astro Dist (km): ${centerToCenterDistanceKm}, 
+      Planet Scaled Orbit Radius (3JS units): ${planetScaledOrbitalRadius.toFixed(2)}, 
+      Central Body Scaled Radius Offset (3JS units): ${centralBodyScaledRadius.toFixed(2)}, 
+      Final Effective Scaled Radius (3JS units): ${finalEffectiveScaledRadius.toFixed(2)}`,
+    )
 
     return orbit
   }
