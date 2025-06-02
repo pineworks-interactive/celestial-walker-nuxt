@@ -18,6 +18,8 @@ import { useSolarSystemData } from '@/composables/useSolarSystemData'
 import { useStarfield } from '@/composables/useStarfield'
 
 // ~ CONFIGS
+import { kmPerAu, scaleFactors, timeConfig } from '@/configs/scaling.config'
+
 import {
   ambientLightConfig,
   cameraConfigDefault,
@@ -126,19 +128,29 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     // * Load solar system data
     await loadSolarSystemData()
 
-    if (solarSystemData.value) {
+    if (solarSystemData.value && solarSystemData.value.sun) {
       // * Create Sun
       sun.value = await createSun(solarSystemData.value.sun)
       if (sun.value)
         scene.add(sun.value)
 
+      // sun's scaled radius
+      const sunPhysicalRadiusKm = Number.parseFloat(solarSystemData.value.sun.physicalProps.meanRadius)
+      const sunScaledRadius = sunPhysicalRadiusKm / scaleFactors.celestialBodyKmPerUnit
+      console.log(`Sun physical radius (km): ${sunPhysicalRadiusKm}, Sun scaled radius (3JS units): ${sunScaledRadius.toFixed(2)}`)
+
       // * Create Earth and its orbit
       const earthData = solarSystemData.value.planets.earth
+
       if (earthData) {
         earth.value = await createPlanet(earthData)
 
+        // Earth's astronomical orbital distance (center to center)
+        const earthAstronomicalOrbitKm = Number.parseFloat(earthData.orbitalProps.semiMajorAxis)
+
         earthOrbit.value = createOrbit(
-          Number.parseFloat(earthData.orbitalProps.semiMajorAxis),
+          earthAstronomicalOrbitKm,
+          sunScaledRadius,
           0.1,
         )
 
@@ -153,7 +165,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       // TODO: Loop through other planets and create them similarly
     }
     else {
-      console.error('solarSystemData.value is null or undefined in initSceneContents')
+      console.error('solarSystemData.value or solarSystemData.value.sun is null or undefined in initSceneContents')
     }
     isSceneContentsInit.value = true
   }
