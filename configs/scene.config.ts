@@ -8,8 +8,8 @@ export const cameraConfigDefault = {
 
 export const cameraInitialPosition = {
   x: 0,
-  y: 0,
-  z: 10,
+  y: 20000,
+  z: 180000,
 }
 
 export const rendererConfig = {
@@ -23,7 +23,7 @@ export const rendererProps = {
 export const sceneConfig = {
   fov: 75,
   near: 0.1,
-  far: 5000,
+  far: 500000,
   containerId: 'canvas',
 }
 
