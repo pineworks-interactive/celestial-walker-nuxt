@@ -1,5 +1,5 @@
 export interface CelestialTextures {
-  main?: string
+  main: string
   day?: string
   night?: string
   clouds?: string
@@ -64,7 +64,5 @@ export interface Sun extends CelestialBody {}
 // Main solar system data structure
 export interface SolarSystemData {
   sun: Sun
-  planets: Array<{
-    [key: string]: Planet
-  }>
+  planets: { [key: string]: Planet }
 }
