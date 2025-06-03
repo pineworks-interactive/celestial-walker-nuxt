@@ -13,15 +13,20 @@ export function useCelestialBodyFactory() {
    * @param radius - Radius of the sphere in km
    * @param segments - Number of segments for the sphere
    */
-  const createSphereGeometry = (radiusKm: number, segments: number, _planetName?: string) => {
+  const createSphereGeometry = (radiusKm: number, segments: number, planetName?: string) => {
     // * We need to convert km unit to 3JS units and apply a scale factor
-    const scaledRadius = radiusKm / scaleFactors.celestialBodyKmPerUnit
+    let scaledRadius = radiusKm / scaleFactors.celestialBodyKmPerUnit
 
-    // // TEMPORARY: Make Earth larger for debugging
-    // if (planetName && planetName.toLowerCase() === 'earth') {
-    //   scaledRadius *= 500 // 500x bigger
-    //   console.warn(`DEBUG: Earth's scaledRadius temporarily increased to: ${scaledRadius}`)
-    // }
+    // TEMPORARY: Make Earth larger for debugging
+    if (planetName && planetName.toLowerCase() === 'earth') {
+      scaledRadius *= 1 // 1x bigger
+      console.warn(`DEBUG: Earth's scaledRadius temporarily increased to: ${scaledRadius}`)
+    }
+    // TEMPORARY: Make Moon larger for debugging
+    if (planetName && planetName.toLowerCase() === 'moon') {
+      scaledRadius *= 1 // 1x bigger
+      console.warn(`DEBUG: Moon's scaledRadius temporarily increased to: ${scaledRadius}`)
+    }
 
     const geometry = new THREE.SphereGeometry(scaledRadius, segments, segments)
     return geometry
@@ -62,7 +67,7 @@ export function useCelestialBodyFactory() {
    */
   const createCelestialBody = async (body: CelestialBody): Promise<THREE.Mesh> => {
     const radius = Number.parseFloat(body.physicalProps.meanRadius)
-    const geometry = createSphereGeometry(radius, 32)
+    const geometry = createSphereGeometry(radius, 32, body.name)
     const material = await createBasicMaterial(body.textures.main)
 
     const mesh = new THREE.Mesh(geometry, material)
@@ -103,6 +108,12 @@ export function useCelestialBodyFactory() {
     //   planetMaterial.emissiveIntensity = 2.0 // Make it quite bright
     //   planetMaterial.needsUpdate = true // Ensure material update
     // }
+    // //TEMPORARY: Make the Moon emissive for debugging
+    // if (planetData.name.toLowerCase() === 'moon') {
+    //   planetMaterial.emissive = new THREE.Color(colors.white) // Bright blue for Earth
+    //   planetMaterial.emissiveIntensity = 2.0 // Make it quite bright
+    //   planetMaterial.needsUpdate = true // Ensure material update
+    // }
 
     return planetMesh
   }
@@ -135,7 +146,7 @@ export function useCelestialBodyFactory() {
       planetScaledOrbitalRadius, // scaled orbit before offset
       centralBodyScaledRadiusOffset: centralBodyScaledRadius, // added offset
     }
-    console.log(`Creating orbit:
+    console.warn(`Creating orbit:
       Planet Astro Dist (km): ${centerToCenterDistanceKm}, 
       Planet Scaled Orbit Radius (3JS units): ${planetScaledOrbitalRadius.toFixed(2)}, 
       Central Body Scaled Radius Offset (3JS units): ${centralBodyScaledRadius.toFixed(2)}, 
