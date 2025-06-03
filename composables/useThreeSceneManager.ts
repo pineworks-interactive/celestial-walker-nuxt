@@ -59,6 +59,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   const sun = shallowRef<Mesh | null>(null)
   const earth = shallowRef<Mesh | null>(null)
   const earthOrbit = shallowRef<Object3D | null>(null)
+  const moon = shallowRef<Mesh | null>(null)
+  const moonOrbit = shallowRef<Object3D | null>(null)
 
   // * Solar system data management
   const { data: solarSystemData, loadData: loadSolarSystemData } = useSolarSystemData()
@@ -134,16 +136,17 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       if (sun.value)
         scene.add(sun.value)
 
-      // sun's scaled radius
+      // Sun's scaled radius
       const sunPhysicalRadiusKm = Number.parseFloat(solarSystemData.value.sun.physicalProps.meanRadius)
       const sunScaledRadius = sunPhysicalRadiusKm / scaleFactors.celestialBodyKmPerUnit
-      console.log(`Sun physical radius (km): ${sunPhysicalRadiusKm}, Sun scaled radius (3JS units): ${sunScaledRadius.toFixed(2)}`)
+      console.warn(`Sun physical radius (km): ${sunPhysicalRadiusKm}, Sun scaled radius (3JS units): ${sunScaledRadius.toFixed(2)}`)
 
       // * Create Earth and its orbit
       const earthData = solarSystemData.value.planets.earth
 
       if (earthData) {
         earth.value = await createPlanet(earthData)
+        console.warn('Earth mesh created:', earth.value)
 
         // Earth's astronomical orbital distance (center to center)
         const earthAstronomicalOrbitKm = Number.parseFloat(earthData.orbitalProps.semiMajorAxis)
@@ -153,15 +156,50 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
           sunScaledRadius,
           0.1,
         )
+        console.warn('Earth orbit object created:', earthOrbit.value)
 
         if (earth.value && earthOrbit.value) {
           earthOrbit.value.add(earth.value)
           scene.add(earthOrbit.value)
+          console.warn('Is Earth mesh\'s parent the Earth orbit object?', earth.value.parent === earthOrbit.value)
+          console.warn('Is Earth orbit\'s parent the main scene?', earthOrbit.value.parent === scene)
+        }
+
+        // * Create Moon
+        const moonData = solarSystemData.value.planets.earth.moons.moon
+
+        if (moonData) {
+          moon.value = await createPlanet(moonData)
+          console.warn('Moon mesh created:', moon.value)
+
+          // Moon's astronomical orbital distance (center to center)
+          const moonAstronomicalOrbitKm = Number.parseFloat(moonData.orbitalProps.semiMajorAxis)
+          // Earth's scaled radius
+          const earthPhysicalRadiusKm = Number.parseFloat(earthData.physicalProps.meanRadius)
+          const earthScaledRadius = earthPhysicalRadiusKm / scaleFactors.celestialBodyKmPerUnit
+
+          moonOrbit.value = createOrbit(
+            moonAstronomicalOrbitKm,
+            earthScaledRadius,
+            2.0,
+          )
+          console.warn('Moon orbit object created:', moonOrbit.value)
+
+          if (moon.value && moonOrbit.value && earthOrbit.value) {
+            moonOrbit.value.add(moon.value)
+            earth.value.add(moonOrbit.value)
+            console.warn('Is Moon mesh\'s parent the Moon orbit object?', moon.value.parent === moonOrbit.value)
+            console.warn('Is Moon orbit\'s parent the Earth mesh?', moonOrbit.value.parent === earth.value)
+          }
+        }
+        else {
+          console.error('Moon data not found in solarSystemData.value.planets.earth.moons')
         }
       }
       else {
         console.error('Earth data not found in solarSystemData.value.planets')
       }
+
       // TODO: Loop through other planets and create them similarly
     }
     else {
@@ -209,6 +247,9 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     // * Celestial bodies animation
     if (earth.value && earthOrbit.value) {
       updateOrbit(earth.value, earthOrbit.value)
+    }
+    if (moon.value && moonOrbit.value && earthOrbit.value) {
+      updateOrbit(moon.value, moonOrbit.value)
     }
     // TODO: Add animation updates for other celestial bodies
 
