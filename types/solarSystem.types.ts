@@ -52,7 +52,7 @@ export interface CelestialBody {
   textures: CelestialTextures
   physicalProps: PhysicalProperties
   orbitalProps: OrbitalProperties
-  moons: Moon[]
+  moons: { [key: string]: Moon }
 }
 
 export interface Moon extends CelestialBody {}
