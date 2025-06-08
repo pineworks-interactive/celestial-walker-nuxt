@@ -8,8 +8,8 @@ export const cameraConfigDefault = {
 
 export const cameraInitialPosition = {
   x: 0,
-  y: 0,
-  z: 10,
+  y: 75,
+  z: 1000,
 }
 
 export const rendererConfig = {
@@ -23,7 +23,7 @@ export const rendererProps = {
 export const sceneConfig = {
   fov: 75,
   near: 0.1,
-  far: 5000,
+  far: 500000,
   containerId: 'canvas',
 }
 
@@ -32,7 +32,7 @@ export const controlsConfig = {
   dampingFactor: 0.05,
   screenSpacePanning: true,
   minDistance: 0.1,
-  maxDistance: 1000,
+  maxDistance: 10000,
   maxPolarAngle: Math.PI / 2,
 }
 

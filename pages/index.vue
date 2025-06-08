@@ -16,7 +16,7 @@ import Button from '@/components/ui/Button.vue'
 
     <div class="mt-8 flex gap-2">
       <Button to="/celestial-walker" label="Celestial Walker" size="lg" icon="solar:asteroid-linear" trailing />
-      <Button to="/shop-list" label="Shopping List" size="lg" icon="solar:bag-5-bold" trailing />
+      <Button to="/shopping-list" label="Shopping List" size="lg" icon="solar:bag-5-bold" trailing />
       <Button to="/gallery" label="3D Gallery" size="lg" icon="solar:gallery-minimalistic-linear" trailing />
     </div>
   </div>
