@@ -28,9 +28,12 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.13.2",
+    "@antfu/eslint-config": "^4.13.3",
     "@tailwindcss/vite": "^4.1.8",
     "@types/three": "^0.176.0",
+    "@typescript-eslint/parser": "^8.33.1",
+    "eslint-plugin-format": "^1.0.1",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4.1.8"
   }
 }

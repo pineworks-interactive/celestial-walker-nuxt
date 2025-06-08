@@ -16,9 +16,12 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { useCelestialBodyFactory } from '@/composables/useCelestialBodyFactory'
 import { useSolarSystemData } from '@/composables/useSolarSystemData'
 import { useStarfield } from '@/composables/useStarfield'
+import { useZoomManager } from '~/composables/useZoomManager'
 
 // ~ CONFIGS
-import { kmPerAu, scaleFactors, timeConfig } from '@/configs/scaling.config'
+import { kmPerAu, scaleFactors, timeConfig  } from '@/configs/scaling.config'
+import { zoomThresholds } from '@/configs/zoom.config'
+
 
 import {
   ambientLightConfig,
@@ -65,6 +68,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   // * Solar system data management
   const { data: solarSystemData, loadData: loadSolarSystemData } = useSolarSystemData()
   const { createSun, createPlanet, createOrbit, updateOrbit, cleanup: cleanupCelestialBodies } = useCelestialBodyFactory()
+  const { setZoomLevel } = useZoomManager()
+
 
   /**
    * # Initialize the scene (basic setup)
@@ -136,7 +141,9 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       if (sun.value)
         scene.add(sun.value)
 
-      // Sun's scaled radius
+
+      // sun's scaled radius
+
       const sunPhysicalRadiusKm = Number.parseFloat(solarSystemData.value.sun.physicalProps.meanRadius)
       const sunScaledRadius = sunPhysicalRadiusKm / scaleFactors.celestialBodyKmPerUnit
       console.warn(`Sun physical radius (km): ${sunPhysicalRadiusKm}, Sun scaled radius (3JS units): ${sunScaledRadius.toFixed(2)}`)
@@ -148,7 +155,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         earth.value = await createPlanet(earthData)
         console.warn('Earth mesh created:', earth.value)
 
-        // Earth's astronomical orbital distance (center to center)
+        // earth's astronomical orbital distance (center to center)
+
         const earthAstronomicalOrbitKm = Number.parseFloat(earthData.orbitalProps.semiMajorAxis)
 
         earthOrbit.value = createOrbit(
@@ -172,9 +180,10 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
           moon.value = await createPlanet(moonData)
           console.warn('Moon mesh created:', moon.value)
 
-          // Moon's astronomical orbital distance (center to center)
+          // moon's astronomical orbital distance (center to center)
           const moonAstronomicalOrbitKm = Number.parseFloat(moonData.orbitalProps.semiMajorAxis)
-          // Earth's scaled radius
+          // earth's scaled radius
+
           const earthPhysicalRadiusKm = Number.parseFloat(earthData.physicalProps.meanRadius)
           const earthScaledRadius = earthPhysicalRadiusKm / scaleFactors.celestialBodyKmPerUnit
 
@@ -200,7 +209,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         console.error('Earth data not found in solarSystemData.value.planets')
       }
 
-      // TODO: Loop through other planets and create them similarly
+      // TODO: loop through other planets and create them similarly
+
     }
     else {
       console.error('solarSystemData.value or solarSystemData.value.sun is null or undefined in initSceneContents')
@@ -243,6 +253,16 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
     // * Update controls
     controls?.update()
+
+    // * Update zoom level
+    if (controls) {
+      const distance = camera.position.distanceTo(controls.target)
+
+      // calculate zoom level based on zoom.config.ts
+      const thresholdIndex = zoomThresholds.findIndex(threshold => distance < threshold)
+      const newZoomLevel = thresholdIndex === -1 ? 0 : zoomThresholds.length - thresholdIndex
+      setZoomLevel(newZoomLevel)
+    }
 
     // * Celestial bodies animation
     if (earth.value && earthOrbit.value) {
