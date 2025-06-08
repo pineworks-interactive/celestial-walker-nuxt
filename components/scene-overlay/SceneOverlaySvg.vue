@@ -1,49 +1,187 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import SvgButton from './SvgButton.vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import DrawerMenu from '@/components/scene-menu/DrawerMenu.vue'
+import CornerNE from './corners/CornerNE.vue'
+import CornerNW from './corners/CornerNW.vue'
+import CornerSE from './corners/CornerSE.vue'
+import CornerSW from './corners/CornerSW.vue'
+import ZoomLevel from './zoom-level/zoomLevelField.vue'
 
-// overlay viewBox
+// * ViewBox's Overlay
 const overlayViewBoxWidth = 1920
 const overlayViewBoxHeight = 1080
 const overlayViewBox = computed(() => `0 0 ${overlayViewBoxWidth} ${overlayViewBoxHeight}`)
 
-// * Button configuration
-// button's height relative to the overlay's height
-const buttonHeightRatio = 0.39
-const calculatedButtonHeight = overlayViewBoxHeight * buttonHeightRatio
+// * Reactive window's dimensions
+const windowWidth = ref(1920)
+const windowHeight = ref(1080)
 
-// button's intrinsic aspectRatio
-const buttonIntrinsicAspectRatio = 10.799147 / 111.40509
-const calculatedButtonWidth = calculatedButtonHeight * buttonIntrinsicAspectRatio
-
-// button's position
-const buttonX = overlayViewBoxWidth * 0.025
-const buttonY = overlayViewBoxHeight * 0.073
-
-// button's function
-function handleButtonClick() {
-  console.warn('overlay button clicked')
+// * Drawer menu state
+const isMenuOpen = ref(false)
+// drawer menu's functions
+function closeMenu() {
+  isMenuOpen.value = false
+}
+function openMenu() {
+  isMenuOpen.value = true
 }
 
-// main frame path from original svg
-const mainFramePathD = 'M 42.431801,0.37273126 H 296.33643 L 317.50066,15.189398 h 116.41727 l 21.1655,-14.81666674 h 52.76351 V 264.58442 c -6.81449,7.11662 -13.91757,13.93748 -21.00725,20.77608 H 21.282467 C 14.245772,278.58437 7.2289652,271.64428 0.37113313,264.612 V 142.8747 L 21.125546,121.61285 21.537799,21.300596 C 28.474113,14.165721 35.077877,7.6677509 42.431801,0.37273126 Z'
-// const mainFrameTransform = 'matrix(0.99666563,0,0,0.99473473,0.13058939,0.12874667)' // Temporarily remove to simplify
+// * Frame config
 const overlayColor = '#00FF7F'
-
 const mainFrameDesiredStrokeWidth = 1
-const decorationDesiredStrokeWidth = 0.5
+const frameMargin = 10
 
-// Recalculate scale and translation for main frame path
-const pathOriginalWidth = 507.8355
-const pathOriginalHeight = 285.35
+// * Anchors data
+const cornerAnchors = {
+  nw: {
+    originalWidth: 83,
+    originalHeight: 293,
+  },
+  ne: {
+    originalWidth: 43,
+    originalHeight: 43,
+  },
+  sw: {
+    originalWidth: 284,
+    originalHeight: 43,
+  },
+  se: {
+    originalWidth: 68,
+    originalHeight: 68,
+  },
+}
 
-// Target a smaller geometric width for more buffer
-const targetGeometricWidth = 1910
-const mainFrameGroupScale = targetGeometricWidth / pathOriginalWidth
+// * Zoom level data
+const zoomLevelGeometry = {
+  originalWidth: 292,
+  originalHeight: 42,
+}
 
-const scaledGeometricHeight = pathOriginalHeight * mainFrameGroupScale
-const mainFrameGroupTranslateX = (overlayViewBoxWidth - targetGeometricWidth) / 2
-const mainFrameGroupTranslateY = (overlayViewBoxHeight - scaledGeometricHeight) / 2
+// * Scaling rules
+const baseScale = computed(() => windowHeight.value / 1080)
+const minScale = 0.5
+const maxScale = 3
+const finalScale = computed(() => {
+  return Math.max(minScale, Math.min(maxScale, baseScale.value))
+})
+
+// * Aspect ratio correction
+const scaleCorrection = computed(() => {
+  const windowRatio = windowWidth.value / windowHeight.value
+  const viewBoxRatio = overlayViewBoxWidth / overlayViewBoxHeight
+  return viewBoxRatio / windowRatio
+})
+
+// * Calculate dynamic positions & sizes
+const nwProps = computed(() => {
+  const scale = finalScale.value
+  const scaleX = scale * scaleCorrection.value
+  const scaleY = scale
+  return {
+    scaleX,
+    scaleY,
+    x: frameMargin,
+    y: frameMargin,
+    width: cornerAnchors.nw.originalWidth * scaleX,
+    height: cornerAnchors.nw.originalHeight * scaleY,
+  }
+})
+
+const neProps = computed(() => {
+  const scale = finalScale.value
+  const scaleX = scale * scaleCorrection.value
+  const scaleY = scale
+  const width = cornerAnchors.ne.originalWidth * scaleX
+  return {
+    scaleX,
+    scaleY,
+    x: overlayViewBoxWidth - width - frameMargin,
+    y: frameMargin,
+    width,
+    height: cornerAnchors.ne.originalHeight * scaleY,
+  }
+})
+
+const swProps = computed(() => {
+  const scale = finalScale.value
+  const scaleX = scale * scaleCorrection.value
+  const scaleY = scale
+  const height = cornerAnchors.sw.originalHeight * scaleY
+  return {
+    scaleX,
+    scaleY,
+    x: frameMargin,
+    y: overlayViewBoxHeight - height - frameMargin,
+    width: cornerAnchors.sw.originalWidth * scaleX,
+    height,
+  }
+})
+
+const seProps = computed(() => {
+  const scale = finalScale.value
+  const scaleX = scale * scaleCorrection.value
+  const scaleY = scale
+  const width = cornerAnchors.se.originalWidth * scaleX
+  const height = cornerAnchors.se.originalHeight * scaleY
+  return {
+    scaleX,
+    scaleY,
+    x: overlayViewBoxWidth - width - frameMargin,
+    y: overlayViewBoxHeight - height - frameMargin,
+    width,
+    height,
+  }
+})
+
+const zoomLevelProps = computed(() => {
+  const scale = finalScale.value
+  const scaleX = scale * scaleCorrection.value
+  const scaleY = scale
+  const width = zoomLevelGeometry.originalWidth * scaleX
+  const height = zoomLevelGeometry.originalHeight * scaleY
+  const x = neProps.value.x - width - (width / 2)
+  return {
+    scaleX,
+    scaleY,
+    x,
+    y: frameMargin,
+    width,
+    height,
+  }
+})
+
+// * Geometry of the menu button
+const menuButtonGeometry = {
+  originalY: 22,
+  originalHeight: 250,
+}
+
+// * Drawer menu's properties
+const drawerProps = computed(() => {
+  const y = nwProps.value.y + menuButtonGeometry.originalY * nwProps.value.scaleY
+  const height = menuButtonGeometry.originalHeight * nwProps.value.scaleY
+  const x = nwProps.value.x + nwProps.value.width
+
+  return { x, y, height }
+})
+
+onMounted(() => {
+  // initial values
+  windowHeight.value = window.innerHeight
+  windowWidth.value = window.innerWidth
+
+  // resize
+  const handleResize = () => {
+    windowWidth.value = window.innerWidth
+    windowHeight.value = window.innerHeight
+  }
+  window.addEventListener('resize', handleResize)
+
+  // cleanup
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResize)
+  })
+})
 </script>
 
 <template>
@@ -51,48 +189,85 @@ const mainFrameGroupTranslateY = (overlayViewBoxHeight - scaledGeometricHeight) 
     <svg
       id="overlay-svg"
       :viewBox="overlayViewBox"
-      preserveAspectRatio="xMidYMid meet"
+      preserveAspectRatio="none"
     >
       <defs />
       <g
-        id="main-frame"
-        :transform="`translate(${mainFrameGroupTranslateX}, ${mainFrameGroupTranslateY}) scale(${mainFrameGroupScale})`"
+        id="responsive-frame"
+        :style="{
+          fill: 'none',
+          stroke: overlayColor,
+          strokeWidth: mainFrameDesiredStrokeWidth,
+          strokeLinecap: 'round',
+        }"
       >
-        <path
-          id="main-frame-path"
-          :style="{
-            fill: 'none',
-            stroke: overlayColor,
-            strokeWidth: mainFrameDesiredStrokeWidth,
-            strokeLinecap: 'round',
-            strokeDasharray: 'none',
-            vectorEffect: 'non-scaling-stroke',
-          }"
-          :d="mainFramePathD"
+        <g
+          :transform="`translate(${nwProps.x}, ${nwProps.y}) scale(${nwProps.scaleX}, ${nwProps.scaleY})`"
+          style="pointer-events: auto; cursor: pointer"
+          @click="openMenu"
+        >
+          <CornerNW />
+        </g>
+        <g
+          :transform="`translate(${neProps.x}, ${neProps.y}) scale(${neProps.scaleX}, ${neProps.scaleY})`"
+        >
+          <CornerNE />
+        </g>
+        <g
+          :transform="`translate(${swProps.x}, ${swProps.y}) scale(${swProps.scaleX}, ${swProps.scaleY})`"
+        >
+          <CornerSW />
+        </g>
+        <g
+          :transform="`translate(${seProps.x}, ${seProps.y}) scale(${seProps.scaleX}, ${seProps.scaleY})`"
+        >
+          <CornerSE />
+        </g>
+        <g
+          :transform="`translate(${zoomLevelProps.x}, ${zoomLevelProps.y}) scale(${zoomLevelProps.scaleX}, ${zoomLevelProps.scaleY})`"
+        >
+          <ZoomLevel />
+        </g>
+
+        <!-- connector lines -->
+        <line
+          :x1="nwProps.x + nwProps.width - 1"
+          :y1="frameMargin + 2"
+          :x2="zoomLevelProps.x + 1"
+          :y2="frameMargin + 1.5"
         />
-        <!-- :transform="mainFrameTransform" // Temporarily removed -->
-        <path
-          id="main-frame-decoration"
-          :style="{
-            fill: overlayColor,
-            stroke: overlayColor,
-            strokeWidth: decorationDesiredStrokeWidth,
-            strokeLinecap: 'round',
-            vectorEffect: 'non-scaling-stroke',
-          }"
-          d="m 484.18466,5.2794785 h 18.46158 V 23.741053 l -8.99836,-9.197583 z"
+        <line
+          :x1="zoomLevelProps.x + zoomLevelProps.width - 1"
+          :y1="frameMargin + 1.5"
+          :x2="neProps.x"
+          :y2="frameMargin + 2"
+        />
+        <line
+          :x1="neProps.x + neProps.width - 2"
+          :y1="neProps.y + neProps.height"
+          :x2="seProps.x + seProps.width - 2"
+          :y2="seProps.y"
+        />
+        <line
+          :x1="swProps.x + swProps.width - 2"
+          :y1="swProps.y + swProps.height - 2"
+          :x2="seProps.x"
+          :y2="seProps.y + seProps.height - 2"
+        />
+        <line
+          :x1="nwProps.x + 2"
+          :y1="nwProps.y + nwProps.height - 0.5"
+          :x2="swProps.x + 2"
+          :y2="swProps.y"
         />
       </g>
-      <SvgButton
-        button-id="overlay-menu-button"
-        :x="buttonX"
-        :y="buttonY"
-        :width="calculatedButtonWidth"
-        :height="calculatedButtonHeight"
-        :button-color="overlayColor"
-        text-color="#000000"
-        text="menu"
-        @click="handleButtonClick"
+      <DrawerMenu
+        :is-open="isMenuOpen"
+        :x="drawerProps.x"
+        :y="drawerProps.y"
+        :menu-height="drawerProps.height"
+        :menu-color="overlayColor"
+        @close="closeMenu"
       />
     </svg>
   </div>
