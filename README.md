@@ -140,6 +140,7 @@ Check out the [deployment documentation](https://nuxt.com/docs/getting-started/d
 - **Code Quality:** Typed, documented, organized
 
 **4. Clarifying Questions:**
+
 - None at this moment. Your answers were comprehensive.
 
 **5. Current Understanding Confidence:** 90%
@@ -149,10 +150,12 @@ Check out the [deployment documentation](https://nuxt.com/docs/getting-started/d
 ### Phase 2: System Context Examination
 
 **1. Existing Codebase:**
+
 - This is a new Nuxt.js application. The current workspace only contains `.gitignore` and `LICENSE`. We will be setting up the Nuxt project structure.
 - I'll request to list the directory structure once Nuxt is initialized to understand its default layout.
 
 **2. Key Nuxt.js Features & Integration Points:**
+
 - **Directory Structure:** We will leverage Nuxt's standard directories:
   - `pages/`: For top-level routes like `index.vue` (home), `shop-list.vue`, `showcase.vue`, and `celestial-walker.vue`
   - `components/`: For reusable Vue components (e.g., the celestial body info card, buttons for the home page)
@@ -169,9 +172,11 @@ Check out the [deployment documentation](https://nuxt.com/docs/getting-started/d
 - **Data Fetching:** The static JSON file for celestial bodies can be fetched using Nuxt's `$fetch` utility or the browser's `fetch` API within a composable
 
 **3. External Systems:**
+
 - None identified beyond the user's browser rendering the web application. We are not integrating with external APIs for data at this stage.
 
 **4. System Boundaries and Responsibilities:**
+
 - **Nuxt.js/Vue:**
   - Overall application structure, routing, and page rendering
   - UI elements outside the Three.js canvas (e.g., navigation buttons on the home page, the floating information card for celestial bodies)
@@ -228,6 +233,7 @@ Check out the [deployment documentation](https://nuxt.com/docs/getting-started/d
 Given the requirements (Nuxt app, significant Three.js portion, focus on maintainability and clean architecture principles from your custom instructions), the primary "architecture pattern" will be a **Component-Based Architecture** (inherent in Vue/Nuxt) augmented with a **Composable-Based Service Layer** for the Three.js and data logic.
 
 - **Pattern 1: Monolithic Component Approach (Less Ideal)**
+
   - **Description:** Place most of the Three.js logic directly within the `pages/celestial-walker.vue` component
   - **Why appropriate (superficially):** Simple for a small demo
   - **Advantages:** Quick to start for a single, isolated 3D scene
@@ -238,6 +244,7 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - The `celestial-walker.vue` component would become massive
 
 - **Pattern 2: Component-Based with Composable Service Layer (Recommended)**
+
   - **Description:**
     - Vue components (`.vue` files in `pages/` and `components/`) handle UI presentation and user interaction dispatch
     - Composables (`.ts` files in `composables/`) encapsulate specific pieces of logic:
@@ -274,6 +281,7 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
 **3. Core Components and Composables (Initial Draft):**
 
 - **Nuxt Pages (`pages/`):**
+
   - `index.vue`: Home page with navigation buttons to sub-sections
   - `shop-list.vue`: Placeholder for the shopping list app
   - `showcase.vue`: Placeholder for the 3D artworks showcase
@@ -283,6 +291,7 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - Manages the layout including the floating info card
 
 - **Vue Components (`components/`):**
+
   - `CelestialBodyInfoCard.vue`: Displays information about a selected celestial body
     - Props: `bodyData` (object), `isVisible` (boolean)
     - Emits: `close`
@@ -327,6 +336,7 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
 ### Phase 4: Technical Specification
 
 **1. Recommended Technologies:**
+
 - **Framework:** Nuxt 3 (Vue 3) - As specified
 - **Language:** TypeScript (strict mode) - As specified
 - **Package Manager:** PNPM - As specified
@@ -334,7 +344,7 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
 - **UI Styling:**
   - Option 1: Standard CSS/SCSS within Vue components
   - Option 2: Tailwind CSS (if you prefer utility-first CSS). Nuxt has a module for Tailwind (`@nuxtjs/tailwindcss`)
-  - *Recommendation:* Start with standard CSS/SCSS scoped to components. It's simpler for the current scale. If styling needs become complex, Tailwind can be added later
+  - _Recommendation:_ Start with standard CSS/SCSS scoped to components. It's simpler for the current scale. If styling needs become complex, Tailwind can be added later
 - **State Management (Simple):** Vue's `ref`, `reactive`, and `provide`/`inject` for local component state and simple cross-component communication (e.g., selected object for the info card). For the solar system data, a reactive ref holding the fetched JSON will be sufficient
 - **Linting/Formatting:** ESLint (already set up with `eslint.config.mjs`) and Prettier. I recommend adding Prettier and configuring it to work with ESLint
 - **Data Format:** JSON for `solar_system.json`
@@ -342,6 +352,7 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
 **2. Implementation Phases & Dependencies:**
 
 - **Phase 0: Project Setup & Basic Pages**
+
   - Task 1: Create directories: `pages`, `components`, `composables`, `public/data`, `public/textures`
   - Task 2: Implement basic placeholder pages:
     - `pages/index.vue` (with navigation buttons)
@@ -351,9 +362,10 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
   - Task 4: Setup basic routing (Nuxt handles this automatically based on `pages/`)
   - Task 5: Create `public/data/solar_system.json` with a minimal structure (e.g., just the Sun and Earth with basic properties) for initial testing
   - Task 6: Add a couple of placeholder texture images to `public/textures/`
-  - *Dependencies:* None. This is the foundational phase
+  - _Dependencies:_ None. This is the foundational phase
 
 - **Phase 1: Core Three.js Scene Setup (`/celestial-walker`)**
+
   - Task 1.1: Implement `useThreeSceneManager.ts`:
     - Initialize `Scene`, `PerspectiveCamera`, `WebGLRenderer`
     - Append renderer's DOM element to a `div` in `celestial-walker.vue`
@@ -362,9 +374,10 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - Handle window resize
   - Task 1.2: Integrate `useThreeSceneManager` into `celestial-walker.vue`
   - Task 1.3: Implement `useStarfield.ts` to create a basic starfield and add it via `celestial-walker.vue`
-  - *Dependencies:* Phase 0
+  - _Dependencies:_ Phase 0
 
 - **Phase 2: Data Loading & Basic Celestial Bodies (`/celestial-walker`)**
+
   - Task 2.1: Define TypeScript interfaces for the `solar_system.json` structure (e.g., `SolarSystemData`, `PlanetData`, `MoonData`, `OrbitParams`, etc.) in a `types/solar-system.types.ts` file
   - Task 2.2: Implement `useSolarSystemData.ts` to fetch and parse `solar_system.json`
   - Task 2.3: Implement a basic version of `useCelestialBodyFactory.ts`:
@@ -372,9 +385,10 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - Implement simple circular orbit logic (ignoring full Keplerian elements for now, just radius and speed)
     - Load and apply basic textures
   - Task 2.4: In `celestial-walker.vue`, use `useSolarSystemData` to get data and `useCelestialBodyFactory` to create and add the Sun and Earth to the scene
-  - *Dependencies:* Phase 1. User-provided `solar_system.json` (at least partial) and textures
+  - _Dependencies:_ Phase 1. User-provided `solar_system.json` (at least partial) and textures
 
 - **Phase 3: Advanced Celestial Bodies & Orbit Trails (`/celestial-walker`)**
+
   - Task 3.1: Enhance `useCelestialBodyFactory.ts`:
     - Implement creation of all planet types and dwarf planets
     - Implement multi-texture loading and material setup for Earth (day, specular, normal maps). Night map can be added if a dynamic day/night cycle is implemented later (out of scope for initial realistic orbit)
@@ -383,9 +397,10 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - Implement accurate orbital mechanics based on provided Keplerian elements from `solar_system.json`
   - Task 3.2: Implement `useOrbitTrail.ts` (or integrate into `useCelestialBodyFactory.ts`):
     - Generate and display orbit trails (simple lines with 0.5 opacity)
-  - *Dependencies:* Phase 2. Complete `solar_system.json` data and all required textures
+  - _Dependencies:_ Phase 2. Complete `solar_system.json` data and all required textures
 
 - **Phase 4: Interactivity (`/celestial-walker`)**
+
   - Task 4.1: Implement `useInteractionManager.ts`:
     - Add `OrbitControls` for camera manipulation
     - Implement raycasting for hover and click
@@ -400,7 +415,7 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - `celestial-walker.vue` shows and populates `CelestialBodyInfoCard.vue`
   - Task 4.4: Dynamic orbit trail thickness in `useOrbitTrail.ts` (or `useCelestialBodyFactory.ts`):
     - Adjust line material thickness based on camera distance to the solar system's center or average planet distance
-  - *Dependencies:* Phase 3
+  - _Dependencies:_ Phase 3
 
 - **Phase 5: Post-Processing & Refinements (`/celestial-walker`)**
   - Task 5.1: Implement `usePostProcessing.ts` for the Sun's bloom effect
@@ -408,11 +423,12 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - Configure it to only affect the Sun (e.g., using layers or by rendering Sun to a separate render target for bloom)
   - Task 5.2: General performance optimizations (texture compression, geometry optimization if needed, draw call reduction)
   - Task 5.3: Code cleanup, documentation (JSDoc), final review against custom instructions
-  - *Dependencies:* Phase 4
+  - _Dependencies:_ Phase 4
 
 **3. Technical Risks and Mitigation Strategies:**
 
 - **Risk 1: Performance issues with many objects, textures, and effects**
+
   - **Mitigation:**
     - Use Three.js performance best practices: instancing (if applicable, though celestial bodies are unique), texture atlases (if many small textures), LOD (Level of Detail - probably overkill for this), frustum culling (default in Three.js)
     - Optimize texture sizes and use compressed formats (e.g., KTX2 with Basis Universal, though this adds complexity; start with JPG/PNG)
@@ -421,17 +437,20 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - For stars, ensure particle system is efficient
 
 - **Risk 2: Complexity of accurate orbital mechanics**
+
   - **Mitigation:**
     - User provides all orbital parameters. The key is to correctly implement the math to convert Keplerian elements (or simplified parameters) to Cartesian coordinates over time
     - Start with simplified circular orbits, then iterate to full Keplerian if necessary and if data provides it. Often, for visualization, mean anomalies and periods are enough to give a good representation without full n-body simulation
     - Refer to reliable astronomical formulas and Three.js examples
 
 - **Risk 3: Managing Three.js object lifecycles and preventing memory leaks**
+
   - **Mitigation:**
     - Diligently use `dispose()` methods on geometries, materials, and textures when objects are removed or the scene is torn down (e.g., in Vue's `onUnmounted` hook)
     - Composables that create Three.js objects should also provide cleanup functions
 
 - **Risk 4: Achieving the specific Sun bloom effect (affecting only the Sun)**
+
   - **Mitigation:**
     - Use Three.js layers: Assign the Sun to a specific layer, and configure the bloom pass to only render that layer
     - Alternatively, render the Sun to an offscreen render target, apply bloom to that target, then composite it back. Layers are often simpler
@@ -443,6 +462,7 @@ Given the requirements (Nuxt app, significant Three.js portion, focus on maintai
     - Provide fallbacks or graceful degradation if very advanced features are used (not planned for now)
 
 **4. Technical Success Criteria:**
+
 - All specified pages (`/`, `/shop-list`, `/showcase`, `/celestial-walker`) are implemented and accessible
 - `/celestial-walker` loads and displays the solar system based on `solar_system.json`
 - All specified celestial bodies (Sun, planets with multi-textures/rings, dwarf planets, moons) are rendered with their textures and orbit trails

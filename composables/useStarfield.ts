@@ -1,7 +1,6 @@
 import type { StarfieldOptions } from '@/types/scene.types'
 import * as THREE from 'three'
-import { onUnmounted, ref } from 'vue'
-import { starfieldConfig } from '@/configs/scene.config'
+import { onUnmounted } from 'vue'
 
 /**
  * ? Creates and manages a starfield in a Three.js scene

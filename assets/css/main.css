@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 @theme static {
   --font-sans: 'Public Sans', sans-serif;
@@ -106,27 +106,27 @@ body {
 
 /* Custom Button Styles */
 /* Color variables for button hover */
-.custom-button-hover[data-color="primary"] {
+.custom-button-hover[data-color='primary'] {
   --hover-bg: var(--color-primary);
 }
 
-.custom-button-hover[data-color="secondary"] {
+.custom-button-hover[data-color='secondary'] {
   --hover-bg: var(--color-secondary);
 }
 
-.custom-button-hover[data-color="tertiary"] {
+.custom-button-hover[data-color='tertiary'] {
   --hover-bg: var(--color-tertiary);
 }
 
-.custom-button-hover[data-color="quaternary"] {
+.custom-button-hover[data-color='quaternary'] {
   --hover-bg: var(--color-quaternary);
 }
 
-.custom-button-hover[data-color="quinary"] {
+.custom-button-hover[data-color='quinary'] {
   --hover-bg: var(--color-quinary);
 }
 
-.custom-button-hover[data-color="neutral"] {
+.custom-button-hover[data-color='neutral'] {
   --hover-bg: var(--color-neutral);
 }
 
