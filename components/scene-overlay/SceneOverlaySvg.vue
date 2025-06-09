@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import DrawerMenu from '@/components/scene-menu/DrawerMenu.vue'
-import CornerNE from './corners/CornerNE.vue'
-import CornerNW from './corners/CornerNW.vue'
-import CornerSE from './corners/CornerSE.vue'
-import CornerSW from './corners/CornerSW.vue'
-import ZoomLevel from './zoom-level/zoomLevelField.vue'
+import CornerNE from '@/components/scene-overlay/corners/CornerNE.vue'
+import CornerNW from '@/components/scene-overlay/corners/CornerNW.vue'
+import CornerSE from '@/components/scene-overlay/corners/CornerSE.vue'
+import CornerSW from '@/components/scene-overlay/corners/CornerSW.vue'
+import ZoomLevel from '@/components/scene-overlay/zoom-level/ZoomLevelField.vue'
 
 // * ViewBox's Overlay
 const overlayViewBoxWidth = 1920

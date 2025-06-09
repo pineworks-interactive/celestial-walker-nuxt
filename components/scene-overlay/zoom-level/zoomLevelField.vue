@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ZoomLevelBars from './zoomLevelBars.vue'
+import ZoomLevelBars from '@/components/scene-overlay/zoom-level/ZoomLevelBars.vue'
 import { useZoomManager } from '@/composables/useZoomManager'
 
 const { zoomLevel } = useZoomManager()
