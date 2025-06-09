@@ -1,3 +1,5 @@
+import type { Mesh } from 'three'
+
 export interface CelestialTextures {
   main: string
   day?: string
@@ -66,3 +68,15 @@ export interface SolarSystemData {
   sun: Sun
   planets: { [key: string]: Planet }
 }
+
+export interface CelestialBodyState {
+  id: string
+  name: string
+  mesh: Mesh
+  isWireframe: boolean
+  hasAxesHelpers: boolean
+  hasGridHelpers: boolean
+}
+
+// UI-specific type
+export type CelestialBodyUIState = Omit<CelestialBodyState, 'mesh'>
