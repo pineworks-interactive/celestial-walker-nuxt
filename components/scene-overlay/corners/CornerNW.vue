@@ -57,7 +57,7 @@
   font-size: 22px;
   font-weight: 600;
   text-anchor: middle;
-  transition: fill 0.2s ease;
+  transition: fill 0.1s ease;
   user-select: none; /* Prevents text selection on click */
 }
 
@@ -67,5 +67,6 @@
 
 .menu-button-container:hover .button-text {
   fill: #000000;
+  stroke: #000000;
 }
 </style>
