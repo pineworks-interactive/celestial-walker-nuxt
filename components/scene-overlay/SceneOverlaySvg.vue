@@ -6,6 +6,7 @@ import CornerNW from '@/components/scene-overlay/corners/CornerNW.vue'
 import CornerSE from '@/components/scene-overlay/corners/CornerSE.vue'
 import CornerSW from '@/components/scene-overlay/corners/CornerSW.vue'
 import ZoomLevel from '@/components/scene-overlay/zoom-level/ZoomLevelField.vue'
+import { colors } from '@/configs/colors.config'
 
 // * ViewBox's Overlay
 const overlayViewBoxWidth = 1920
@@ -27,27 +28,27 @@ function openMenu() {
 }
 
 // * Frame config
-const overlayColor = '#00FF7F'
+const overlayColor = colors.springGreen
 const mainFrameDesiredStrokeWidth = 1
 const frameMargin = 10
 
 // * Anchors data
 const cornerAnchors = {
   nw: {
-    originalWidth: 83,
-    originalHeight: 293,
+    originalWidth: 80,
+    originalHeight: 290,
   },
   ne: {
-    originalWidth: 43,
-    originalHeight: 43,
+    originalWidth: 40,
+    originalHeight: 40,
   },
   sw: {
-    originalWidth: 284,
-    originalHeight: 43,
+    originalWidth: 280,
+    originalHeight: 40,
   },
   se: {
-    originalWidth: 68,
-    originalHeight: 68,
+    originalWidth: 50,
+    originalHeight: 50,
   },
 }
 
@@ -159,7 +160,7 @@ const menuButtonGeometry = {
 // * Drawer menu's properties
 const drawerProps = computed(() => {
   const y = nwProps.value.y + menuButtonGeometry.originalY * nwProps.value.scaleY
-  const height = menuButtonGeometry.originalHeight * nwProps.value.scaleY
+  const height = overlayViewBoxHeight * 0.85
   const x = nwProps.value.x + nwProps.value.width
 
   return { x, y, height }
@@ -231,33 +232,33 @@ onMounted(() => {
 
         <!-- connector lines -->
         <line
-          :x1="nwProps.x + nwProps.width - 1"
-          :y1="frameMargin + 2"
-          :x2="zoomLevelProps.x + 1"
-          :y2="frameMargin + 1.5"
+          :x1="nwProps.x + nwProps.width"
+          :y1="frameMargin"
+          :x2="zoomLevelProps.x"
+          :y2="frameMargin"
         />
         <line
-          :x1="zoomLevelProps.x + zoomLevelProps.width - 1"
-          :y1="frameMargin + 1.5"
+          :x1="zoomLevelProps.x + zoomLevelProps.width"
+          :y1="frameMargin"
           :x2="neProps.x"
-          :y2="frameMargin + 2"
+          :y2="frameMargin"
         />
         <line
-          :x1="neProps.x + neProps.width - 2"
+          :x1="neProps.x + neProps.width"
           :y1="neProps.y + neProps.height"
-          :x2="seProps.x + seProps.width - 2"
+          :x2="seProps.x + seProps.width"
           :y2="seProps.y"
         />
         <line
-          :x1="swProps.x + swProps.width - 2"
-          :y1="swProps.y + swProps.height - 2"
+          :x1="swProps.x + swProps.width"
+          :y1="swProps.y + swProps.height"
           :x2="seProps.x"
-          :y2="seProps.y + seProps.height - 2"
+          :y2="seProps.y + seProps.height"
         />
         <line
-          :x1="nwProps.x + 2"
-          :y1="nwProps.y + nwProps.height - 0.5"
-          :x2="swProps.x + 2"
+          :x1="nwProps.x"
+          :y1="nwProps.y + nwProps.height"
+          :x2="swProps.x"
           :y2="swProps.y"
         />
       </g>
@@ -265,7 +266,7 @@ onMounted(() => {
         :is-open="isMenuOpen"
         :x="drawerProps.x"
         :y="drawerProps.y"
-        :menu-height="drawerProps.height"
+        :height="drawerProps.height"
         :menu-color="overlayColor"
         @close="closeMenu"
       />
