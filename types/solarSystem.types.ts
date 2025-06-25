@@ -55,6 +55,7 @@ export interface CelestialBody {
   physicalProps: PhysicalProperties
   orbitalProps: OrbitalProperties
   moons: { [key: string]: Moon }
+  mesh?: Mesh
 }
 
 export interface Moon extends CelestialBody {}
