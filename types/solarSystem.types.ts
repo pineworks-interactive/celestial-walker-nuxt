@@ -1,4 +1,4 @@
-import type { AxesHelper, GridHelper, Line, Mesh } from 'three'
+import type { AxesHelper, GridHelper, Line, Mesh, Object3D } from 'three'
 
 export interface CelestialTextures {
   main: string
@@ -83,7 +83,8 @@ export interface CelestialBodyState {
 export interface OrbitState {
   id: string
   name: string
-  line: Line
+  pivot: Object3D
+  orbitalHelperHost: Object3D
   hasAxesHelpers: boolean
   hasGridHelpers: boolean
   axesHelper?: AxesHelper
@@ -92,4 +93,4 @@ export interface OrbitState {
 
 // UI-specific type
 export type CelestialBodyUIState = Omit<CelestialBodyState, 'mesh' | 'axesHelper' | 'gridHelper'>
-export type OrbitUIState = Omit<OrbitState, 'line' | 'axesHelper' | 'gridHelper'>
+export type OrbitUIState = Omit<OrbitState, 'pivot' | 'axesHelper' | 'gridHelper' | 'orbitalHelperHost'>
