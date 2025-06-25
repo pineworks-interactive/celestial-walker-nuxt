@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import MenuAccordion from '@/components/scene-menu/MenuAccordion.vue'
-import { useDebugControls } from '@/composables/useDebugControls'
+import MenuAccordionBodies from '@/components/scene-menu/MenuAccordionBodies.vue'
+import MenuAccordionOrbits from '@/components/scene-menu/MenuAccordionOrbits.vue'
+import { useDebugActions } from '@/composables/useVisualisation'
+import { globalAxes, globalGrids, globalWireframe } from '@/composables/visualisationState'
+import { colors } from '@/configs/colors.config'
 
 interface Props {
   isOpen: boolean
   x?: number
   y?: number
-  menuHeight?: number
+  height?: number
   targetWidth?: number
   menuColor?: string
 }
@@ -17,14 +20,18 @@ const props = withDefaults(defineProps<Props>(), {
   isOpen: false,
   x: 0,
   y: 0,
-  menuHeight: 1080,
-  targetWidth: 800,
-  menuColor: '#00ff7f',
+  height: 1080,
+  targetWidth: 500,
+  menuColor: colors.springGreen,
 })
 
 const emit = defineEmits(['close'])
 
-const { globalWireframe, toggleGlobalWireframe } = useDebugControls()
+const {
+  toggleGlobalWireframe,
+  toggleGlobalAxes,
+  toggleGlobalGrids,
+} = useDebugActions()
 
 function closeMenu() {
   emit('close')
@@ -68,14 +75,13 @@ const contentStyle = computed((): CSSProperties => {
     return {}
 
   const scaledWidth = props.targetWidth * scaleX.value
-  const scaledHeight = props.menuHeight * scaleY.value
+  const scaledHeight = props.height * scaleY.value
 
   return {
     transform: `scale(${1 / scaleX.value}, ${1 / scaleY.value})`,
     transformOrigin: 'top left',
     width: `${scaledWidth}px`,
     height: `${scaledHeight}px`,
-    overflowY: 'auto',
     overflowX: 'hidden',
   }
 })
@@ -98,7 +104,7 @@ const contentStyle = computed((): CSSProperties => {
     <!-- * Drawer UI -->
     <rect
       :width="finalWidth"
-      :height="props.menuHeight"
+      :height="props.height"
       fill="url(#gradMenu)"
       :stroke="props.menuColor"
       stroke-width="2"
@@ -108,34 +114,55 @@ const contentStyle = computed((): CSSProperties => {
     <!-- * HTML Content -->
     <foreignObject
       :width="finalWidth"
-      :height="props.menuHeight"
+      :height="props.height"
       style="transition: width 0.15s linear"
     >
       <div class="drawer-content-wrapper" :style="contentStyle">
         <div class="drawer-content">
-          <h2>Debug Menu</h2>
+          <div class="scrollable-content">
+            <h2>User Interface</h2>
 
-          <!-- Global Toggles -->
-          <div class="dev-tools-section">
-            <h3 class="dev-tools-title">
-              Global Toggles
-            </h3>
-            <button class="debug-button" @click="toggleGlobalWireframe">
-              <span>Toggle All Wireframe</span>
-              <span :class="{ 'text-green-400': globalWireframe }">{{ globalWireframe ? 'ON' : 'OFF' }}</span>
-            </button>
+            <!-- * Global Toggles -->
+            <div class="dev-tools-section">
+              <h3 class="dev-tools-title">
+                Global Toggles
+              </h3>
+              <div class="flex flex-col gap-2">
+                <button class="debug-button" @click="toggleGlobalWireframe">
+                  <span>Toggle All Wireframe</span>
+                  <span :class="{ 'text-green-400': globalWireframe }">{{ globalWireframe ? 'ON' : 'OFF' }}</span>
+                </button>
+                <button class="debug-button" @click="toggleGlobalAxes">
+                  <span>Toggle All Axes</span>
+                  <span :class="{ 'text-green-400': globalAxes }">{{ globalAxes ? 'ON' : 'OFF' }}</span>
+                </button>
+                <button class="debug-button" @click="toggleGlobalGrids">
+                  <span>Toggle All Grids</span>
+                  <span :class="{ 'text-green-400': globalGrids }">{{ globalGrids ? 'ON' : 'OFF' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <hr class="separator">
+
+            <!-- * Celestial Bodies Toggles -->
+            <div class="dev-tools-section">
+              <h3 class="dev-tools-title">
+                Celestial Bodies
+              </h3>
+              <MenuAccordionBodies />
+            </div>
+
+            <hr class="separator">
+
+            <!-- * Orbits Toggles -->
+            <div class="dev-tools-section">
+              <h3 class="dev-tools-title">
+                Celestial Orbits
+              </h3>
+              <MenuAccordionOrbits />
+            </div>
           </div>
-
-          <hr class="separator">
-
-          <!-- Celestial Bodies Toggles -->
-          <div class="dev-tools-section">
-            <h3 class="dev-tools-title">
-              Celestial Bodies
-            </h3>
-            <MenuAccordion />
-          </div>
-
           <button class="close-button" aria-label="Close menu" @click="closeMenu">
             Close
           </button>
@@ -149,17 +176,29 @@ const contentStyle = computed((): CSSProperties => {
 .drawer-content-wrapper {
   color: #ffffff;
   box-sizing: border-box;
+  height: 100%;
 }
 
 .drawer-content {
   padding: 25px;
   opacity: 0;
   transition: opacity 0.2s linear;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .drawer-open .drawer-content {
   opacity: 1;
   transition-delay: 0.1s;
+}
+
+.scrollable-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 15px;
+  margin-right: -15px;
 }
 
 .drawer-content h2 {
@@ -195,7 +234,7 @@ const contentStyle = computed((): CSSProperties => {
 .debug-button {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
+  color: #ffffff;
   padding: 10px 18px;
   cursor: pointer;
   border-radius: 4px;
@@ -227,6 +266,7 @@ const contentStyle = computed((): CSSProperties => {
   transition:
     background-color 0.2s,
     color 0.2s;
+  flex-shrink: 0;
 }
 
 .close-button:hover,
