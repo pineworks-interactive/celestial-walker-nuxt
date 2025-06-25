@@ -9,31 +9,31 @@ export function useCelestialBodyFactory() {
   const createdMeshes = ref<THREE.Mesh[]>([])
 
   /**
-   * ? Creates a basic sphere geometry for a celestial body
+   * # Creates a basic sphere geometry for a celestial body
    * @param radius - Radius of the sphere in km
    * @param segments - Number of segments for the sphere
    */
-  const createSphereGeometry = (radiusKm: number, segments: number, planetName?: string) => {
+  const createSphereGeometry = (radiusKm: number, segments: number, _planetName?: string) => {
     // * We need to convert km unit to 3JS units and apply a scale factor
-    let scaledRadius = radiusKm / scaleFactors.celestialBodyKmPerUnit
+    const scaledRadius = radiusKm / scaleFactors.celestialBodyKmPerUnit
 
-    // TEMPORARY: Make Earth larger for debugging
-    if (planetName && planetName.toLowerCase() === 'earth') {
-      scaledRadius *= 1 // 1x bigger
-      console.warn(`DEBUG: Earth's scaledRadius temporarily increased to: ${scaledRadius}`)
-    }
-    // TEMPORARY: Make Moon larger for debugging
-    if (planetName && planetName.toLowerCase() === 'moon') {
-      scaledRadius *= 1 // 1x bigger
-      console.warn(`DEBUG: Moon's scaledRadius temporarily increased to: ${scaledRadius}`)
-    }
+    // // TEMPORARY: Make Earth larger for debugging
+    // if (planetName && planetName.toLowerCase() === 'earth') {
+    //   scaledRadius *= 1 // 1x bigger
+    //   console.warn(`DEBUG --> : Earth's scaledRadius temporarily increased to: ${scaledRadius}`)
+    // }
+    // // TEMPORARY: Make Moon larger for debugging
+    // if (planetName && planetName.toLowerCase() === 'moon') {
+    //   scaledRadius *= 1 // 1x bigger
+    //   console.warn(`DEBUG --> : Moon's scaledRadius temporarily increased to: ${scaledRadius}`)
+    // }
 
     const geometry = new THREE.SphereGeometry(scaledRadius, segments, segments)
     return geometry
   }
 
   /**
-   * ? Loads a texture file from a given path
+   * # Loads a texture file from a given path
    * @param path - Path to the texture file
    */
   const loadTexture = async (path: string): Promise<THREE.Texture> => {
@@ -49,7 +49,7 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ? Creates a basic material for a celestial body
+   * # Creates a basic material for a celestial body
    * @param texturePath - Path to the texture file
    */
   const createBasicMaterial = async (texturePath: string): Promise<THREE.MeshStandardMaterial> => {
@@ -62,7 +62,7 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ? Creates a celestial body mesh from geometry and material
+   * # Creates a celestial body mesh from geometry and material
    * @param body - Celestial body data
    */
   const createCelestialBody = async (body: CelestialBody): Promise<THREE.Mesh> => {
@@ -77,7 +77,7 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ?Creates the Sun with basic properties
+   * # Creates the Sun with basic properties
    * @param sunData - Sun data from solar_system_data.json
    */
   const createSun = async (sunData: Sun): Promise<THREE.Mesh> => {
@@ -92,7 +92,7 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ? Creates a planet with basic properties
+   * # Creates a planet with basic properties
    * @param planetData - Planet data from solar_system_data.json
    */
   const createPlanet = async (planetData: Planet): Promise<THREE.Mesh> => {
@@ -119,7 +119,7 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ? Creates a simple circular orbit
+   * # Creates a simple circular orbit
    * @param centerToCenterDistanceKm - Orbital distance from center of central body to center of orbiting body in km
    * @param centralBodyScaledRadius - Scaled radius of the central body in 3JS units
    * @param speed - Orbit speed in degrees per frame
@@ -135,7 +135,7 @@ export function useCelestialBodyFactory() {
     const planetOrbitalRadiusAu = centerToCenterDistanceKm / kmPerAu
     const planetScaledOrbitalRadius = planetOrbitalRadiusAu / scaleFactors.orbitalDistanceAuPerUnit
 
-    // *Planet's own scaled orbital distance + scaled radius of the central body's mesh.
+    // * Planet's own scaled orbital distance + scaled radius of the central body's mesh.
     const finalEffectiveScaledRadius = planetScaledOrbitalRadius + centralBodyScaledRadius
 
     orbit.userData = {
@@ -146,7 +146,7 @@ export function useCelestialBodyFactory() {
       planetScaledOrbitalRadius, // scaled orbit before offset
       centralBodyScaledRadiusOffset: centralBodyScaledRadius, // added offset
     }
-    console.warn(`Creating orbit:
+    console.warn(`DEBUG --> Creating orbit:
       Planet Astro Dist (km): ${centerToCenterDistanceKm}, 
       Planet Scaled Orbit Radius (3JS units): ${planetScaledOrbitalRadius.toFixed(2)}, 
       Central Body Scaled Radius Offset (3JS units): ${centralBodyScaledRadius.toFixed(2)}, 
@@ -157,20 +157,33 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ? Updates the position of a celestial body in its orbit
-   * @param body - The celestial body mesh
-   * @param orbit - The orbit object
+   * # Updates the position of a celestial body in its orbit
+   * @param pivot - The celestial body's parent pivot to update
+   * @param time - The current simulation time
+   * @param orbitalPeriodDays - The orbital period in Earth days
+   * @param semiMajorAxis - The semi-major axis (orbital radius)
    */
-  const updateOrbit = (body: THREE.Mesh, orbit: THREE.Object3D): void => {
-    const { orbitRadius, orbitSpeed } = orbit.userData
-    const time = Date.now() * 0.001 // convert to seconds
+  const updateOrbit = (
+    pivot: THREE.Object3D,
+    time: number,
+    orbitalPeriodDays: number,
+    semiMajorAxis: number,
+  ): void => {
+    const bodyToOrbit = pivot.children[0]
+    if (!bodyToOrbit)
+      return
 
-    body.position.x = Math.cos(time * orbitSpeed) * orbitRadius
-    body.position.z = Math.sin(time * orbitSpeed) * orbitRadius
+    // ? Calculate the orbital speed based on the period
+    const angularSpeed = (2 * Math.PI) / orbitalPeriodDays
+    const angle = time * angularSpeed
+
+    // ? Calculate the position of the child body, not the pivot
+    bodyToOrbit.position.x = Math.cos(angle) * semiMajorAxis
+    bodyToOrbit.position.z = Math.sin(angle) * semiMajorAxis
   }
 
   /**
-   * ? Cleanup function to dispose of created meshes and materials
+   * # Cleanup function to dispose of created meshes and materials
    */
   const cleanup = (): void => {
     createdMeshes.value.forEach((mesh) => {
