@@ -7,7 +7,7 @@ export function useSolarSystemData() {
   const error = ref<Error | null>(null)
 
   /**
-   * ? Fetches and parses the solar system data from the JSON file
+   * # Fetches and parses the solar system data from the JSON file
    * @returns Promise that resolves when data is loaded
    */
   const loadData = async (): Promise<void> => {
