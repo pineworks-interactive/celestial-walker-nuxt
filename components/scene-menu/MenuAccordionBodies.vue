@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import MenuAccordionCheckbox from '@/components/scene-menu/MenuAccordionCheckbox.vue'
-import { useDebugControls } from '@/composables/useDebugControls'
+import { useDebugActions } from '@/composables/useVisualisation'
+import { celestialBodiesForUI } from '@/composables/visualisationState'
 
 const {
-  celestialBodies,
   toggleBodyWireframe,
   toggleBodyAxisHelper,
   toggleBodyGridHelper,
-} = useDebugControls()
+} = useDebugActions()
 
-// simple ref to track currently open accordion item id
+// ~ --- Reactive state ---
 const openItemId = ref<string | null>(null)
 
-/**
- * ? Toggles an accordion item open or closed.
- * @param id The ID of the celestial body to toggle.
- */
+// ~ --- Functions ---
 function toggleItem(id: string) {
   openItemId.value = openItemId.value === id ? null : id
 }
@@ -25,7 +22,7 @@ function toggleItem(id: string) {
 <template>
   <div class="w-full">
     <div
-      v-for="body in celestialBodies"
+      v-for="body in celestialBodiesForUI"
       :key="body.id"
       class="border-b border-gray-700"
     >
@@ -53,17 +50,17 @@ function toggleItem(id: string) {
         <MenuAccordionCheckbox
           :model-value="body.isWireframe"
           label="Wireframe"
-          @update:model-value="toggleBodyWireframe(body.id)"
+          @update:model-value="() => toggleBodyWireframe(body.id)"
         />
         <MenuAccordionCheckbox
           :model-value="body.hasAxesHelpers"
           label="Axes Helper"
-          @update:model-value="toggleBodyAxisHelper(body.id)"
+          @update:model-value="() => toggleBodyAxisHelper(body.id)"
         />
         <MenuAccordionCheckbox
           :model-value="body.hasGridHelpers"
           label="Grid Helper"
-          @update:model-value="toggleBodyGridHelper(body.id)"
+          @update:model-value="() => toggleBodyGridHelper(body.id)"
         />
       </div>
     </div>
