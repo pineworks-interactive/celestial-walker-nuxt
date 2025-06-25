@@ -1,5 +1,6 @@
 import type { PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import type { Ref } from 'vue'
 
 export interface SceneManagerOptions {
   containerId: string
@@ -24,5 +25,5 @@ export interface StarfieldOptions {
   size: number
   minDistance: number
   maxDistance: number
-  color: number
+  color: string
 }

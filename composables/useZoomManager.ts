@@ -4,11 +4,11 @@ const zoomLevel = ref(0)
 
 /**
  * # Composable for managing and providing access to the scene's zoom level.
- * @returns An object with the current zoom level.
+ * @returns An object with the current zoom level
  */
 export function useZoomManager() {
   /**
-   * Method to set the zoom level.
+   * Method to set the zoom level
    * @param level - The new zoom level (0-10).
    */
   const setZoomLevel = (level: number) => {
@@ -16,7 +16,7 @@ export function useZoomManager() {
   }
 
   return {
-    // ? 0 = fully zoomed out, 10 = fully zoomed in.
+    // ? 0 = fully zoomed out, 10 = fully zoomed in
     zoomLevel: readonly(zoomLevel),
     setZoomLevel,
   }

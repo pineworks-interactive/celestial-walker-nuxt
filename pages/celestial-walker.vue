@@ -1,8 +1,7 @@
 <script setup lang="ts">
+import SceneOverlay from '@/components/scene-overlay/SceneOverlaySvg.vue'
 import { useThreeSceneManager } from '@/composables/useThreeSceneManager'
 import { sceneConfig } from '@/configs/scene.config'
-import SceneOverlay from '~/components/scene-overlay/SceneOverlaySvg.vue'
-
 
 useThreeSceneManager(sceneConfig)
 </script>

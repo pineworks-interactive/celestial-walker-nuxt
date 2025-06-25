@@ -1,3 +1,5 @@
+import type { AxesHelper, GridHelper, Line, Mesh, Object3D } from 'three'
+
 export interface CelestialTextures {
   main: string
   day?: string
@@ -66,3 +68,29 @@ export interface SolarSystemData {
   sun: Sun
   planets: { [key: string]: Planet }
 }
+
+export interface CelestialBodyState {
+  id: string
+  name: string
+  mesh: Mesh
+  isWireframe: boolean
+  hasAxesHelpers: boolean
+  hasGridHelpers: boolean
+  axesHelper?: AxesHelper
+  gridHelper?: GridHelper
+}
+
+export interface OrbitState {
+  id: string
+  name: string
+  pivot: Object3D
+  orbitalHelperHost: Object3D
+  hasAxesHelpers: boolean
+  hasGridHelpers: boolean
+  axesHelper?: AxesHelper
+  gridHelper?: GridHelper
+}
+
+// UI-specific type
+export type CelestialBodyUIState = Omit<CelestialBodyState, 'mesh' | 'axesHelper' | 'gridHelper'>
+export type OrbitUIState = Omit<OrbitState, 'pivot' | 'axesHelper' | 'gridHelper' | 'orbitalHelperHost'>

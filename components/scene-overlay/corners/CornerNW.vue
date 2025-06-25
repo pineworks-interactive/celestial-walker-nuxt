@@ -1,33 +1,33 @@
 <script setup lang="ts">
-
+import { colors } from '@/configs/colors.config'
 </script>
 
 <template>
   <g class="menu-button-container">
     <path
-      d="M62 22L22 62V272M62 22V232L22 272M62 22L82 2M22 272L2 292"
-      stroke="#00FF7F"
+      d="M60 20L20 60V270M60 20V230L20 270M60 20L80 0M20 270L0 290"
+      :stroke="colors.springGreen"
       stroke-linecap="round"
       class="button-bg"
     />
     <path
-      d="M12 2H2V12"
-      stroke="#00FF7F"
+      d="M10 0H0V10"
+      :stroke="colors.springGreen"
       stroke-opacity="0.5"
       stroke-width="3"
       stroke-linecap="square"
     />
-    <text y="88" class="button-text">
-      <tspan x="42" dy="1.2em">
+    <text y="86" class="button-text">
+      <tspan x="40" dy="1.2em">
         M
       </tspan>
-      <tspan x="42" dy="1.2em">
+      <tspan x="40" dy="1.2em">
         E
       </tspan>
-      <tspan x="43" dy="1.2em">
+      <tspan x="41" dy="1.2em">
         N
       </tspan>
-      <tspan x="41" dy="1.2em">
+      <tspan x="39" dy="1.2em">
         U
       </tspan>
     </text>
@@ -41,7 +41,7 @@
 }
 
 .button-text {
-  fill: #00ff7f;
+  fill: v-bind('colors.springGreen');
   font-family:
     system-ui,
     -apple-system,
@@ -62,11 +62,11 @@
 }
 
 .menu-button-container:hover .button-bg {
-  fill: #00ff7f;
+  fill: v-bind('colors.springGreen');
 }
 
 .menu-button-container:hover .button-text {
-  fill: #000000;
-  stroke: #000000;
+  fill: v-bind('colors.black');
+  stroke: v-bind('colors.black');
 }
 </style>

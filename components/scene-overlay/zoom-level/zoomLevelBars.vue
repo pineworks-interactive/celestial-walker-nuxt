@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { colors } from '@/configs/colors.config'
 
 interface Props {
   zoomLevel: number
@@ -31,7 +32,7 @@ const visibleBarsCount = computed(() => Math.round(props.zoomLevel))
       v-for="(bar, index) in bars"
       :key="index"
       :d="bar.d"
-      fill="#00FF7F"
+      :fill="colors.springGreen"
       :visibility="index < visibleBarsCount ? 'visible' : 'hidden'"
     />
   </g>

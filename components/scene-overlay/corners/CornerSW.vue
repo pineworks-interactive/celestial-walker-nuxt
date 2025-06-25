@@ -1,16 +1,16 @@
 <script setup lang="ts">
-
+import { colors } from '@/configs/colors.config'
 </script>
 
 <template>
   <g>
     <path
-      d="M2 1H242.086L282 41H42L2 1Z"
-      stroke="#00FF7F"
+      d="M0 0H240.086L280 40H40L0 0Z"
+      :stroke="colors.springGreen"
     />
     <path
-      d="M2 31V41H12"
-      stroke="#00FF7F"
+      d="M0 30V40H10"
+      :stroke="colors.springGreen"
       stroke-opacity="0.5"
       stroke-width="3"
       stroke-linecap="square"
