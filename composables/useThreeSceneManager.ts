@@ -19,6 +19,7 @@ import { useStarfield } from '@/composables/useStarfield'
 import { useZoomManager } from '@/composables/useZoomManager'
 import { useDebugActions } from '@/composables/useVisualisation'
 import { orbits } from '@/composables/visualisationState'
+import { useInteractionManager } from '@/composables/useInteractionManager'
 
 // ~ CONFIGS
 import { kmPerAu, scaleFactors, timeConfig } from '@/configs/scaling.config'
@@ -98,6 +99,9 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     controls = new OrbitControls(camera, renderer.domElement)
     Object.assign(controls, controlsConfig)
 
+    // * Interactions
+    useInteractionManager(camera, renderer)
+
     // * Camera setup
     camera.position.set(
       cameraInitialPosition.x,
@@ -160,6 +164,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       if (earthData) {
         earth.value = await createPlanet(earthData)
         if (earth.value) {
+          earth.value.userData.id = earthData.id // ? id for raycasting
           registerCelestialBody('earth', 'Earth', earth.value)
           console.warn('DEBUG --> : Earth mesh created:', earth.value)
         }
@@ -198,6 +203,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
           moon.value = await createPlanet(moonData)
           console.warn('DEBUG --> : Moon mesh created:', moon.value)
           if (moon.value) {
+            moon.value.userData.id = moonData.id // ? id for raycasting
             registerCelestialBody('moon', 'Moon', moon.value)
           }
 
@@ -243,7 +249,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     else {
       console.error('solarSystemData.value or solarSystemData.value.sun is null or undefined in initSceneContents')
     }
-    console.warn('[SceneManager] Reached the end of initSceneContents.')
+    console.warn('DEBUG --> [SceneManager] Reached the end of initSceneContents.')
     isSceneContentsInit.value = true
   }
 
@@ -281,7 +287,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     animationFrameId = requestAnimationFrame(animate)
 
     // ? get the time elapsed since the last frame (in seconds)
-    const deltaTime = clock.getDelta()
+    const deltaTime = clock.getElapsedTime()
     simulatedTime += deltaTime * timeConfig.simulationSpeed
 
     if (sun.value) {
@@ -289,22 +295,36 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     }
 
     if (earth.value && earthOrbit.value && solarSystemData.value?.planets.earth) {
-      const orbitalPeriod = Number.parseFloat(solarSystemData.value.planets.earth.orbitalProps.orbitalPeriod)
-      const semiMajorAxis = (Number.parseFloat(solarSystemData.value.planets.earth.orbitalProps.semiMajorAxis) / kmPerAu) / scaleFactors.orbitalDistanceAuPerUnit
+      const orbitalPeriod = Number.parseFloat(
+        solarSystemData.value.planets.earth.orbitalProps.orbitalPeriod,
+      )
+
+      const semiMajorAxis = (
+        Number.parseFloat(
+          solarSystemData.value.planets.earth.orbitalProps.semiMajorAxis,
+        ) / kmPerAu
+      ) / scaleFactors.orbitalDistanceAuPerUnit
+
       updateOrbit(earthOrbit.value, simulatedTime, orbitalPeriod, semiMajorAxis)
 
-      // Synchronize orbital helper host position
+      // synchronize orbital helper host position
       const earthOrbitState = orbits.value.find(orbit => orbit.id === 'earth-orbit')
       if (earthOrbitState)
         earthOrbitState.orbitalHelperHost.position.copy(earth.value.position)
     }
 
     if (moon.value && moonOrbit.value && solarSystemData.value?.planets.earth.moons.moon) {
-      const orbitalPeriod = Number.parseFloat(solarSystemData.value.planets.earth.moons.moon.orbitalProps.orbitalPeriod)
-      const semiMajorAxis = Number.parseFloat(solarSystemData.value.planets.earth.moons.moon.orbitalProps.semiMajorAxis) / scaleFactors.localOrbitalDistanceKmPerUnit
+      const orbitalPeriod = Number.parseFloat(
+        solarSystemData.value.planets.earth.moons.moon.orbitalProps.orbitalPeriod,
+      )
+
+      const semiMajorAxis = Number.parseFloat(
+        solarSystemData.value.planets.earth.moons.moon.orbitalProps.semiMajorAxis,
+      ) / scaleFactors.localOrbitalDistanceKmPerUnit
+
       updateOrbit(moonOrbit.value, simulatedTime, orbitalPeriod, semiMajorAxis)
 
-      // Synchronize orbital helper host position
+      // synchronize orbital helper host position
       const moonOrbitState = orbits.value.find(orbit => orbit.id === 'moon-orbit')
       if (moonOrbitState)
         moonOrbitState.orbitalHelperHost.position.copy(moon.value.position)
