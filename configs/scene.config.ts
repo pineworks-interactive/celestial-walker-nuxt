@@ -1,15 +1,19 @@
-import { colors } from './colors.config'
+import { colors } from '@/configs/colors.config'
 
 export const cameraConfigDefault = {
   fov: 75,
   near: 0.1,
-  far: 1000,
+  far: 50000,
 }
 
 export const cameraInitialPosition = {
   x: 0,
   y: 75,
   z: 1000,
+  screenSpacePanning: true,
+  minDistance: 0.1,
+  maxDistance: 20000,
+  maxPolarAngle: Math.PI / 2,
 }
 
 export const rendererConfig = {
