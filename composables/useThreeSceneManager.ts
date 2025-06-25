@@ -7,7 +7,7 @@ import type { Mesh, Object3D, Points } from 'three'
 import { onMounted, onUnmounted, ref, shallowRef } from 'vue'
 
 // ~ THREE.JS
-import { AmbientLight, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
+import { AmbientLight, Clock, MathUtils, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 
 // ~ THREE.JS ADDONS
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
@@ -17,7 +17,8 @@ import { useCelestialBodyFactory } from '@/composables/useCelestialBodyFactory'
 import { useSolarSystemData } from '@/composables/useSolarSystemData'
 import { useStarfield } from '@/composables/useStarfield'
 import { useZoomManager } from '@/composables/useZoomManager'
-import { useDebugControls } from '@/composables/useDebugControls'
+import { useDebugActions } from '@/composables/useVisualisation'
+import { orbits } from '@/composables/visualisationState'
 
 // ~ CONFIGS
 import { kmPerAu, scaleFactors, timeConfig } from '@/configs/scaling.config'
@@ -48,6 +49,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     options.near ?? cameraConfigDefault.near,
     options.far ?? cameraConfigDefault.far,
   )
+  const clock = new Clock()
 
   let renderer: WebGLRenderer | null = null
   let controls: OrbitControls | null = null
@@ -56,6 +58,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   const isSceneBaseInit = ref(false)
   const isSceneContentsInit = ref(false)
   let animationFrameId: number | null = null
+  let simulatedTime = 0
 
   // * Scene objects management
   const starfield = shallowRef<Points | null>(null)
@@ -69,7 +72,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   const { data: solarSystemData, loadData: loadSolarSystemData } = useSolarSystemData()
   const { createSun, createPlanet, createOrbit, updateOrbit, cleanup: cleanupCelestialBodies } = useCelestialBodyFactory()
   const { setZoomLevel } = useZoomManager()
-  const { registerCelestialBody } = useDebugControls()
+  const { registerCelestialBody, registerOrbit } = useDebugActions()
 
   /**
    * ? Initialize the scene
@@ -120,7 +123,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   }
 
   /**
-   * ? Load data and create scene contents (starfield, celestial bodies)
+   * # Load data and create scene contents (starfield, celestial bodies, orbits)
    */
   const initSceneContents = async () => {
     if (!isSceneBaseInit.value) {
@@ -163,16 +166,26 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
         // earth's astronomical orbital distance (center to center)
         const earthAstronomicalOrbitKm = Number.parseFloat(earthData.orbitalProps.semiMajorAxis)
+        const earthOrbitRadius = (earthAstronomicalOrbitKm / kmPerAu) / scaleFactors.orbitalDistanceAuPerUnit
+        const earthOrbitInclination = Number.parseFloat(solarSystemData.value.sun.physicalProps.axialTilt)
 
         earthOrbit.value = createOrbit(
           earthAstronomicalOrbitKm,
           sunScaledRadius,
-          0.1,
         )
+
+        earthOrbit.value.rotation.x = MathUtils.degToRad(earthOrbitInclination)
         console.warn('DEBUG --> : Earth orbit object created:', earthOrbit.value)
 
         if (earth.value && earthOrbit.value) {
           earthOrbit.value.add(earth.value)
+          registerOrbit(
+            'earth-orbit',
+            'Earth Orbit',
+            earthOrbit.value,
+            earthOrbitRadius,
+            earthOrbitInclination,
+          )
           scene.add(earthOrbit.value)
           console.warn('DEBUG --> : Is Earth mesh\'s parent the Earth orbit object?', earth.value.parent === earthOrbit.value)
           console.warn('DEBUG --> : Is Earth orbit\'s parent the main scene?', earthOrbit.value.parent === scene)
@@ -190,6 +203,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
           // moon's astronomical orbital distance (center to center)
           const moonAstronomicalOrbitKm = Number.parseFloat(moonData.orbitalProps.semiMajorAxis)
+          const moonOrbitRadius = moonAstronomicalOrbitKm / scaleFactors.celestialBodyKmPerUnit
+          const moonOrbitInclination = Number.parseFloat(moonData.orbitalProps.inclination)
 
           // earth's scaled radius
           const earthPhysicalRadiusKm = Number.parseFloat(earthData.physicalProps.meanRadius)
@@ -198,12 +213,18 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
           moonOrbit.value = createOrbit(
             moonAstronomicalOrbitKm,
             earthScaledRadius,
-            2.0,
           )
           console.warn('DEBUG --> : Moon orbit object created:', moonOrbit.value)
 
-          if (moon.value && moonOrbit.value && earthOrbit.value) {
+          if (moon.value && moonOrbit.value) {
             moonOrbit.value.add(moon.value)
+            registerOrbit(
+              'moon-orbit',
+              'Moon Orbit',
+              moonOrbit.value,
+              moonOrbitRadius,
+              moonOrbitInclination,
+            )
             earth.value.add(moonOrbit.value)
             console.warn('DEBUG --> : Is Moon mesh\'s parent the Moon orbit object?', moon.value.parent === moonOrbit.value)
             console.warn('DEBUG --> : Is Moon orbit\'s parent the Earth mesh?', moonOrbit.value.parent === earth.value)
@@ -222,11 +243,12 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     else {
       console.error('solarSystemData.value or solarSystemData.value.sun is null or undefined in initSceneContents')
     }
+    console.warn('[SceneManager] Reached the end of initSceneContents.')
     isSceneContentsInit.value = true
   }
 
   /**
-   * ? Full initialization sequence
+   * # Full initialization sequence
    */
   const initialize = async () => {
     initBaseScene()
@@ -238,7 +260,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   }
 
   /**
-   * ? Handle window resize events
+   * # Handle window resize events
    */
   const handleResize = () => {
     if (!isSceneBaseInit.value || !renderer || !camera)
@@ -250,13 +272,43 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   }
 
   /**
-   * ? Animation loop
+   * # Animation loop
    */
   const animate = () => {
     if (!isSceneBaseInit.value || !renderer || !camera)
       return
 
     animationFrameId = requestAnimationFrame(animate)
+
+    // ? get the time elapsed since the last frame (in seconds)
+    const deltaTime = clock.getDelta()
+    simulatedTime += deltaTime * timeConfig.simulationSpeed
+
+    if (sun.value) {
+      sun.value.rotation.y += 0.05 * deltaTime
+    }
+
+    if (earth.value && earthOrbit.value && solarSystemData.value?.planets.earth) {
+      const orbitalPeriod = Number.parseFloat(solarSystemData.value.planets.earth.orbitalProps.orbitalPeriod)
+      const semiMajorAxis = (Number.parseFloat(solarSystemData.value.planets.earth.orbitalProps.semiMajorAxis) / kmPerAu) / scaleFactors.orbitalDistanceAuPerUnit
+      updateOrbit(earthOrbit.value, simulatedTime, orbitalPeriod, semiMajorAxis)
+
+      // Synchronize orbital helper host position
+      const earthOrbitState = orbits.value.find(orbit => orbit.id === 'earth-orbit')
+      if (earthOrbitState)
+        earthOrbitState.orbitalHelperHost.position.copy(earth.value.position)
+    }
+
+    if (moon.value && moonOrbit.value && solarSystemData.value?.planets.earth.moons.moon) {
+      const orbitalPeriod = Number.parseFloat(solarSystemData.value.planets.earth.moons.moon.orbitalProps.orbitalPeriod)
+      const semiMajorAxis = Number.parseFloat(solarSystemData.value.planets.earth.moons.moon.orbitalProps.semiMajorAxis) / scaleFactors.localOrbitalDistanceKmPerUnit
+      updateOrbit(moonOrbit.value, simulatedTime, orbitalPeriod, semiMajorAxis)
+
+      // Synchronize orbital helper host position
+      const moonOrbitState = orbits.value.find(orbit => orbit.id === 'moon-orbit')
+      if (moonOrbitState)
+        moonOrbitState.orbitalHelperHost.position.copy(moon.value.position)
+    }
 
     // * Update controls
     controls?.update()
@@ -271,13 +323,6 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       setZoomLevel(newZoomLevel)
     }
 
-    // * Celestial bodies animation
-    if (earth.value && earthOrbit.value) {
-      updateOrbit(earth.value, earthOrbit.value)
-    }
-    if (moon.value && moonOrbit.value && earthOrbit.value) {
-      updateOrbit(moon.value, moonOrbit.value)
-    }
     // TODO: Add animation updates for other celestial bodies
 
     renderer.render(scene, camera)
