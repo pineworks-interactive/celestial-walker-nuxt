@@ -27,3 +27,8 @@ export interface StarfieldOptions {
   maxDistance: number
   color: string
 }
+
+export interface HoveredBodyState {
+  id: string
+  name: string
+}
