@@ -7,7 +7,7 @@ import type { Mesh, Object3D, Points } from 'three'
 import { onMounted, onUnmounted, ref, shallowRef } from 'vue'
 
 // ~ THREE.JS
-import { AmbientLight, Clock, MathUtils, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
+import { AmbientLight, ArrowHelper, Clock, MathUtils, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three'
 
 // ~ THREE.JS ADDONS
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
@@ -54,6 +54,11 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
   let renderer: WebGLRenderer | null = null
   let controls: OrbitControls | null = null
+  let interactionManager: {
+    init: () => void
+    dispose: () => void
+    checkHoverIntersection: () => void
+  } | null = null
 
   // * State management
   const isSceneBaseInit = ref(false)
@@ -99,8 +104,18 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     controls = new OrbitControls(camera, renderer.domElement)
     Object.assign(controls, controlsConfig)
 
+    // DEBUG : Raycast Helper
+    // const raycastHelper = new ArrowHelper(
+    //   new Vector3(0, 0, -1), // Initial direction
+    //   camera.position, // Initial position
+    //   500, // Length of the arrow
+    //   0xFF0000, // Red color
+    // )
+    // scene.add(raycastHelper)
+
     // * Interactions
-    useInteractionManager(camera, renderer)
+    interactionManager = useInteractionManager(scene, camera, renderer)
+    interactionManager.init()
 
     // * Camera setup
     camera.position.set(
@@ -287,7 +302,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     animationFrameId = requestAnimationFrame(animate)
 
     // ? get the time elapsed since the last frame (in seconds)
-    const deltaTime = clock.getElapsedTime()
+    const deltaTime = clock.getDelta()
     simulatedTime += deltaTime * timeConfig.simulationSpeed
 
     if (sun.value) {
@@ -329,6 +344,9 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       if (moonOrbitState)
         moonOrbitState.orbitalHelperHost.position.copy(moon.value.position)
     }
+
+    // * Check for hover intersection
+    interactionManager?.checkHoverIntersection()
 
     // * Update controls
     controls?.update()
@@ -381,6 +399,9 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
     // * Cleanup celestial bodies
     cleanupCelestialBodies()
+
+    // * Dispose of interaction manager
+    interactionManager?.dispose()
 
     // * Dispose of renderer
     renderer?.dispose()
