@@ -71,6 +71,7 @@ export function useCelestialBodyFactory() {
     const material = await createBasicMaterial(body.textures.main)
 
     const mesh = new THREE.Mesh(geometry, material)
+    mesh.name = body.name
     createdMeshes.value.push(mesh)
 
     return mesh
@@ -128,8 +129,10 @@ export function useCelestialBodyFactory() {
     centerToCenterDistanceKm: number,
     centralBodyScaledRadius: number = 0, // default to 0 if no offset needed
     speed: number = 0.1,
+    orbitName: string = '',
   ): THREE.Object3D => {
     const orbit = new THREE.Object3D()
+    orbit.name = orbitName
 
     // * Scale the planet's astronomical orbital distance (center-to-center)
     const planetOrbitalRadiusAu = centerToCenterDistanceKm / kmPerAu
