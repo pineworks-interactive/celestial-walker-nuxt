@@ -1,37 +1,45 @@
-import type { Camera, WebGLRenderer } from 'three'
+import type { Camera, Object3D, Scene, WebGLRenderer } from 'three'
 import { Raycaster, Vector2 } from 'three'
-import { onMounted, onUnmounted } from 'vue'
 import { hoveredBody, selectedBody } from '@/composables/interactionState'
 import { useSolarSystemData } from '@/composables/useSolarSystemData'
 import { celestialBodies } from '@/composables/visualisationState'
 
 export function useInteractionManager(
+  scene: Scene,
   camera: Camera,
   renderer: WebGLRenderer,
 ) {
   const raycaster = new Raycaster()
-  const mouse = new Vector2()
+  const mouse = new Vector2(-2, -2) // ? initialize off-screen
   const { data: solarSystemData } = useSolarSystemData()
 
+  function findBodyByIntersect(intersectedObject: Object3D) {
+    if (!intersectedObject)
+      return null
+
+    // ? identify a 3JS object by its UUID
+    return celestialBodies.value.find(
+      body => body.mesh.uuid === intersectedObject.uuid,
+    )
+  }
+
   function onMouseMove(event: MouseEvent) {
-    // * Mous coordinates normalization
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+    const canvasBounds = renderer.domElement.getBoundingClientRect()
+    mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1
+    mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1
+  }
 
-    // * Raycasting
+  function checkHoverIntersection() {
     raycaster.setFromCamera(mouse, camera)
-
-    // * Intersection check
     const intersects = raycaster.intersectObjects(
       celestialBodies.value.map(body => body.mesh),
+      true,
     )
 
-    if (intersects.length > 0) {
-      const intersectedObject = intersects[0].object
-      const bodyState = celestialBodies.value.find(
-        body => body.mesh === intersectedObject,
-      )
-      if (bodyState && hoveredBody.value?.id !== bodyState.id) {
+    const bodyState = findBodyByIntersect(intersects[0]?.object)
+
+    if (bodyState) {
+      if (hoveredBody.value?.id !== bodyState.id) {
         hoveredBody.value = {
           id: bodyState.id,
           name: bodyState.name,
@@ -45,51 +53,39 @@ export function useInteractionManager(
     }
   }
 
-  function onClick(event: MouseEvent) {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
-
+  function onClick() {
     raycaster.setFromCamera(mouse, camera)
+    const intersects = raycaster.intersectObjects(scene.children, true)
+    const bodyState = findBodyByIntersect(intersects[0]?.object)
 
-    const intersects = raycaster.intersectObjects(
-      celestialBodies.value.map(body => body.mesh),
-    )
+    if (bodyState && solarSystemData.value) {
+      const { sun, planets } = solarSystemData.value
+      let bodyData = null
 
-    if (intersects.length > 0) {
-      const intersectedObject = intersects[0].object
-      const bodyState = celestialBodies.value.find(
-        body => body.mesh === intersectedObject,
-      )
-
-      if (bodyState && solarSystemData.value) {
-        const { sun, planets } = solarSystemData.value
-        let bodyData = null
-
-        if (sun.id === bodyState.id) {
-          bodyData = { ...sun, mesh: bodyState.mesh }
-        }
-        else {
-          for (const planetKey in planets) {
-            const planet = planets[planetKey]
-            if (planet.id === bodyState.id) {
-              bodyData = { ...planet, mesh: bodyState.mesh }
-              break
-            }
-            for (const moonKey in planet.moons) {
-              const moon = planet.moons[moonKey]
-              if (moon.id === bodyState.id) {
-                bodyData = { ...moon, mesh: bodyState.mesh }
-                break
-              }
-            }
-            if (bodyData)
-              break
+      if (sun.id === bodyState.id) {
+        bodyData = { ...sun, mesh: bodyState.mesh }
+      }
+      else {
+        for (const planetKey in planets) {
+          const planet = planets[planetKey]
+          if (planet.id === bodyState.id) {
+            bodyData = { ...planet, mesh: bodyState.mesh }
+            break
           }
+          for (const moonKey in planet.moons) {
+            const moon = planet.moons[moonKey]
+            if (moon.id === bodyState.id) {
+              bodyData = { ...moon, mesh: bodyState.mesh }
+              break
+            }
+          }
+          if (bodyData)
+            break
         }
+      }
 
-        if (bodyData) {
-          selectedBody.value = bodyData
-        }
+      if (bodyData) {
+        selectedBody.value = bodyData
       }
     }
   }
@@ -100,15 +96,21 @@ export function useInteractionManager(
     }
   }
 
-  onMounted(() => {
+  const init = () => {
     renderer.domElement.addEventListener('mousemove', onMouseMove)
     renderer.domElement.addEventListener('click', onClick)
     window.addEventListener('keydown', onKeyDown)
-  })
+  }
 
-  onUnmounted(() => {
+  const dispose = () => {
     renderer.domElement.removeEventListener('mousemove', onMouseMove)
     renderer.domElement.removeEventListener('click', onClick)
     window.removeEventListener('keydown', onKeyDown)
-  })
+  }
+
+  return {
+    init,
+    dispose,
+    checkHoverIntersection,
+  }
 }
