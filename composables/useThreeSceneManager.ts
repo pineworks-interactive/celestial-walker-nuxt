@@ -4,13 +4,17 @@ import type { SceneManager, SceneManagerOptions } from '@/types/scene.types'
 import type { Mesh, Object3D, Points } from 'three'
 
 // ~ VUE
-import { onMounted, onUnmounted, ref, shallowRef } from 'vue'
+import { onMounted, onUnmounted, ref, shallowRef, toRaw, watch } from 'vue'
 
 // ~ THREE.JS
-import { AmbientLight, ArrowHelper, Clock, MathUtils, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three'
+import { AmbientLight, Clock, MathUtils, PerspectiveCamera, Scene, Vector2, Vector3, WebGLRenderer } from 'three'
 
 // ~ THREE.JS ADDONS
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 
 // ~ EXTERNAL COMPOSABLES
 import { useCelestialBodyFactory } from '@/composables/useCelestialBodyFactory'
@@ -18,8 +22,9 @@ import { useSolarSystemData } from '@/composables/useSolarSystemData'
 import { useStarfield } from '@/composables/useStarfield'
 import { useZoomManager } from '@/composables/useZoomManager'
 import { useDebugActions } from '@/composables/useVisualisation'
-import { orbits } from '@/composables/visualisationState'
+import { celestialBodies, orbits } from '@/composables/visualisationState'
 import { useInteractionManager } from '@/composables/useInteractionManager'
+import { outlineColor, outlinedObjects, outlineParams } from '@/composables/effectsState'
 
 // ~ CONFIGS
 import { kmPerAu, scaleFactors, timeConfig } from '@/configs/scaling.config'
@@ -46,7 +51,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   const scene = new Scene()
   const camera = new PerspectiveCamera(
     options.fov ?? cameraConfigDefault.fov,
-    1, // ! window.innerWidth / window.innerHeight does not work here, use 1 instead (will be updated in renderer setup)
+    1,
     options.near ?? cameraConfigDefault.near,
     options.far ?? cameraConfigDefault.far,
   )
@@ -54,6 +59,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
   let renderer: WebGLRenderer | null = null
   let controls: OrbitControls | null = null
+  let composer: EffectComposer | null = null
+  let outlinePass: OutlinePass | null = null
   let interactionManager: {
     init: () => void
     dispose: () => void
@@ -81,7 +88,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   const { registerCelestialBody, registerOrbit } = useDebugActions()
 
   /**
-   * ? Initialize the scene
+   * # Initialize the scene
    */
   const initBaseScene = () => {
     if (isSceneBaseInit.value)
@@ -104,17 +111,30 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     controls = new OrbitControls(camera, renderer.domElement)
     Object.assign(controls, controlsConfig)
 
-    // DEBUG : Raycast Helper
-    // const raycastHelper = new ArrowHelper(
-    //   new Vector3(0, 0, -1), // Initial direction
-    //   camera.position, // Initial position
-    //   500, // Length of the arrow
-    //   0xFF0000, // Red color
-    // )
-    // scene.add(raycastHelper)
+    // * Post-processing
+    composer = new EffectComposer(renderer)
+
+    const renderPass = new RenderPass(scene, camera)
+    composer.addPass(renderPass)
+
+    outlinePass = new OutlinePass(new Vector2(window.innerWidth, window.innerHeight), scene, camera)
+    composer.addPass(outlinePass)
+
+    const outputPass = new OutputPass()
+    composer.addPass(outputPass)
+
+    // Configure outline pass
+    outlinePass.edgeStrength = outlineParams.edgeStrength
+    outlinePass.edgeGlow = outlineParams.edgeGlow
+    outlinePass.edgeThickness = outlineParams.edgeThickness
+    outlinePass.pulsePeriod = outlineParams.pulsePeriod
+    outlinePass.visibleEdgeColor.set(outlineColor.value)
+    outlinePass.hiddenEdgeColor.set(outlineColor.value)
+    // eslint-disable-next-line ts/no-use-before-define
+    setupEffectWatchers()
 
     // * Interactions
-    interactionManager = useInteractionManager(scene, camera, renderer)
+    interactionManager = useInteractionManager(scene, camera, renderer, celestialBodies)
     interactionManager.init()
 
     // * Camera setup
@@ -142,6 +162,33 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   }
 
   /**
+   * # Watch for changes in effects state and update the OutlinePass
+   */
+  const setupEffectWatchers = () => {
+    if (!outlinePass)
+      return
+
+    if (renderer) {
+      // * watch for changes in outlinedObjects
+      watch(outlinedObjects, (newOutlinedObjects) => {
+        // //console.log(`[FINAL_CHECK] Renderer received objects:`, newOutlinedObjects)
+        if (outlinePass) {
+          // Convert the Vue proxy and its children to a raw array for 3JS
+          outlinePass.selectedObjects = toRaw(newOutlinedObjects).map(obj => toRaw(obj))
+        }
+      }, { deep: true })
+
+      // * watch for changes in outlineColor
+      watch(outlineColor, (newColor) => {
+        if (outlinePass) {
+          outlinePass.visibleEdgeColor.set(newColor)
+          outlinePass.hiddenEdgeColor.set(newColor)
+        }
+      })
+    }
+  }
+
+  /**
    * # Load data and create scene contents (starfield, celestial bodies, orbits)
    */
   const initSceneContents = async () => {
@@ -160,18 +207,19 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     if (solarSystemData.value && solarSystemData.value.sun) {
       // * Create Sun
       sun.value = await createSun(solarSystemData.value.sun)
-      console.warn('DEBUG --> : Sun mesh created:', sun.value)
+      // //console.warn('DEBUG --> : Sun mesh created:', sun.value)
 
       if (sun.value) {
+        sun.value.userData.id = solarSystemData.value.sun.id // ? id for raycasting
         scene.add(sun.value)
         registerCelestialBody('sun', 'Sun', sun.value)
-        console.warn('DEBUG --> : Is Sun mesh\'s parent the main scene?', sun.value.parent === scene)
+        // //console.warn('DEBUG --> : Is Sun mesh\'s parent the main scene?', sun.value.parent === scene)
       }
 
       // sun's scaled radius
       const sunPhysicalRadiusKm = Number.parseFloat(solarSystemData.value.sun.physicalProps.meanRadius)
       const sunScaledRadius = sunPhysicalRadiusKm / scaleFactors.celestialBodyKmPerUnit
-      console.warn(`DEBUG --> : Sun physical radius (km): ${sunPhysicalRadiusKm}, Sun scaled radius (3JS units): ${sunScaledRadius.toFixed(2)}`)
+      // //console.warn(`DEBUG --> : Sun physical radius (km): ${sunPhysicalRadiusKm}, Sun scaled radius (3JS units): ${sunScaledRadius.toFixed(2)}`)
 
       // * Create Earth and its orbit
       const earthData = solarSystemData.value.planets.earth
@@ -181,7 +229,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         if (earth.value) {
           earth.value.userData.id = earthData.id // ? id for raycasting
           registerCelestialBody('earth', 'Earth', earth.value)
-          console.warn('DEBUG --> : Earth mesh created:', earth.value)
+          // //console.warn('DEBUG --> : Earth mesh created:', earth.value)
         }
 
         // earth's astronomical orbital distance (center to center)
@@ -195,7 +243,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         )
 
         earthOrbit.value.rotation.x = MathUtils.degToRad(earthOrbitInclination)
-        console.warn('DEBUG --> : Earth orbit object created:', earthOrbit.value)
+        // //console.warn('DEBUG --> : Earth orbit object created:', earthOrbit.value)
 
         if (earth.value && earthOrbit.value) {
           earthOrbit.value.add(earth.value)
@@ -207,8 +255,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
             earthOrbitInclination,
           )
           scene.add(earthOrbit.value)
-          console.warn('DEBUG --> : Is Earth mesh\'s parent the Earth orbit object?', earth.value.parent === earthOrbit.value)
-          console.warn('DEBUG --> : Is Earth orbit\'s parent the main scene?', earthOrbit.value.parent === scene)
+          // //console.warn('DEBUG --> : Is Earth mesh\'s parent the Earth orbit object?', earth.value.parent === earthOrbit.value)
+          // //console.warn('DEBUG --> : Is Earth orbit\'s parent the main scene?', earthOrbit.value.parent === scene)
         }
 
         // * Create Moon
@@ -216,7 +264,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
         if (moonData) {
           moon.value = await createPlanet(moonData)
-          console.warn('DEBUG --> : Moon mesh created:', moon.value)
+          // //console.warn('DEBUG --> : Moon mesh created:', moon.value)
           if (moon.value) {
             moon.value.userData.id = moonData.id // ? id for raycasting
             registerCelestialBody('moon', 'Moon', moon.value)
@@ -235,7 +283,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
             moonAstronomicalOrbitKm,
             earthScaledRadius,
           )
-          console.warn('DEBUG --> : Moon orbit object created:', moonOrbit.value)
+          // //console.warn('DEBUG --> : Moon orbit object created:', moonOrbit.value)
 
           if (moon.value && moonOrbit.value) {
             moonOrbit.value.add(moon.value)
@@ -246,9 +294,9 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
               moonOrbitRadius,
               moonOrbitInclination,
             )
-            earth.value.add(moonOrbit.value)
-            console.warn('DEBUG --> : Is Moon mesh\'s parent the Moon orbit object?', moon.value.parent === moonOrbit.value)
-            console.warn('DEBUG --> : Is Moon orbit\'s parent the Earth mesh?', moonOrbit.value.parent === earth.value)
+            scene.add(moonOrbit.value)
+            // //console.warn('DEBUG --> : Is Moon mesh\'s parent the Moon orbit object?', moon.value.parent === moonOrbit.value)
+            // //console.warn('DEBUG --> : Is Moon orbit\'s parent the Earth mesh?', moonOrbit.value.parent === earth.value)
           }
         }
         else {
@@ -289,7 +337,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
-    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer?.setSize(window.innerWidth, window.innerHeight)
+    composer?.setSize(window.innerWidth, window.innerHeight)
   }
 
   /**
@@ -328,16 +377,19 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         earthOrbitState.orbitalHelperHost.position.copy(earth.value.position)
     }
 
-    if (moon.value && moonOrbit.value && solarSystemData.value?.planets.earth.moons.moon) {
-      const orbitalPeriod = Number.parseFloat(
+    if (moon.value && earth.value && moonOrbit.value && solarSystemData.value?.planets.earth.moons.moon) {
+      // Manually update the Moon's orbital pivot to follow the Earth's world position.
+      moonOrbit.value.position.copy(earth.value.getWorldPosition(new Vector3()))
+
+      const moonOrbitalPeriod = Number.parseFloat(
         solarSystemData.value.planets.earth.moons.moon.orbitalProps.orbitalPeriod,
       )
 
-      const semiMajorAxis = Number.parseFloat(
+      const moonSemiMajorAxis = Number.parseFloat(
         solarSystemData.value.planets.earth.moons.moon.orbitalProps.semiMajorAxis,
       ) / scaleFactors.localOrbitalDistanceKmPerUnit
 
-      updateOrbit(moonOrbit.value, simulatedTime, orbitalPeriod, semiMajorAxis)
+      updateOrbit(moonOrbit.value, simulatedTime, moonOrbitalPeriod, moonSemiMajorAxis)
 
       // synchronize orbital helper host position
       const moonOrbitState = orbits.value.find(orbit => orbit.id === 'moon-orbit')
@@ -363,11 +415,11 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
     // TODO: Add animation updates for other celestial bodies
 
-    renderer.render(scene, camera)
+    composer?.render()
   }
 
   /**
-   * ? Animation control methods
+   * # Animation control methods
    */
   const startAnimationLoop = () => {
     if (!animationFrameId && isSceneBaseInit.value && isSceneContentsInit.value) {
@@ -383,7 +435,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   }
 
   /**
-   * ? Cleanup function
+   * # Cleanup function
    */
   const dispose = () => {
     if (!isSceneBaseInit.value && !isSceneContentsInit.value)
@@ -411,7 +463,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     isSceneContentsInit.value = false
   }
 
-  // ? Lifecycle hooks
+  // # Lifecycle hooks
   onMounted(() => {
     initialize()
   })
