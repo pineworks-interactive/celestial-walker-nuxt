@@ -25,6 +25,8 @@ import { useDebugActions } from '@/composables/useVisualisation'
 import { celestialBodies, orbits } from '@/composables/visualisationState'
 import { useInteractionManager } from '@/composables/useInteractionManager'
 import { outlineColor, outlinedObjects, outlineParams } from '@/composables/effectsState'
+import { useCameraManager } from '@/composables/useCameraManager'
+import { selectedBody } from '@/composables/interactionState'
 
 // ~ CONFIGS
 import { kmPerAu, scaleFactors, timeConfig } from '@/configs/scaling.config'
@@ -65,6 +67,10 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     init: () => void
     dispose: () => void
     checkHoverIntersection: () => void
+  } | null = null
+  let cameraManager: {
+    focusOnBody: (target: any) => void
+    resetCamera: () => void
   } | null = null
 
   // * State management
@@ -111,6 +117,11 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     controls = new OrbitControls(camera, renderer.domElement)
     Object.assign(controls, controlsConfig)
 
+    // * Camera manager
+    cameraManager = useCameraManager(camera, controls)
+    // eslint-disable-next-line ts/no-use-before-define
+    setupCameraWatchers()
+
     // * Post-processing
     composer = new EffectComposer(renderer)
 
@@ -123,7 +134,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     const outputPass = new OutputPass()
     composer.addPass(outputPass)
 
-    // Configure outline pass
+    // configure outline pass
     outlinePass.edgeStrength = outlineParams.edgeStrength
     outlinePass.edgeGlow = outlineParams.edgeGlow
     outlinePass.edgeThickness = outlineParams.edgeThickness
@@ -186,6 +197,22 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         }
       })
     }
+  }
+
+  /**
+   * # Watch for changes in camera state and trigger camera actions
+   */
+  const setupCameraWatchers = () => {
+    if (!cameraManager)
+      return
+
+    watch(selectedBody, (newBody) => {
+      if (newBody)
+        cameraManager?.focusOnBody(newBody)
+
+      else
+        cameraManager?.resetCamera()
+    })
   }
 
   /**
