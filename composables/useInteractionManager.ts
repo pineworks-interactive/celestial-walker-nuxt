@@ -31,12 +31,18 @@ export function useInteractionManager(
 
   function checkHoverIntersection() {
     raycaster.setFromCamera(mouse, camera)
-    const intersects = raycaster.intersectObjects(
-      celestialBodies.value.map(body => body.mesh),
-      true,
-    )
+    // need to filter out starfield as it seem to jam raycasting
+    const interactiveObjects = scene.children.filter(child => child.name !== 'starfield')
+    const intersects = raycaster.intersectObjects(interactiveObjects, true)
 
-    const bodyState = findBodyByIntersect(intersects[0]?.object)
+    let bodyState = null
+    for (const intersect of intersects) {
+      const foundBody = findBodyByIntersect(intersect.object)
+      if (foundBody) {
+        bodyState = foundBody
+        break // Found the closest valid body, stop searching
+      }
+    }
 
     if (bodyState) {
       if (hoveredBody.value?.id !== bodyState.id) {
@@ -55,7 +61,9 @@ export function useInteractionManager(
 
   function onClick() {
     raycaster.setFromCamera(mouse, camera)
-    const intersects = raycaster.intersectObjects(scene.children, true)
+    // need to filter out starfield as it seem to jam raycasting
+    const interactiveObjects = scene.children.filter(child => child.name !== 'starfield')
+    const intersects = raycaster.intersectObjects(interactiveObjects, true)
     const bodyState = findBodyByIntersect(intersects[0]?.object)
 
     if (bodyState && solarSystemData.value) {
