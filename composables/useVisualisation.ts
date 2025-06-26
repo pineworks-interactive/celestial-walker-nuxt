@@ -174,6 +174,11 @@ export function toggleGlobalGrids() {
  */
 export function registerCelestialBody(id: string, name: string, mesh: Mesh) {
   _log(`Attempting to register celestial body: ${name} (id: ${id})`)
+  // console.warn(`%c[REGISTERING] %c${name}`, 'color: blue; font-weight: bold;', 'color: default;', {
+  //   name: mesh.name,
+  //   uuid: mesh.uuid,
+  //   userData: JSON.parse(JSON.stringify(mesh.userData)),
+  // })
   if (!_findBody(id)) {
     // ? safely compute the bounding sphere to get the radius for the helpers
     if (!mesh.geometry.boundingSphere) {
