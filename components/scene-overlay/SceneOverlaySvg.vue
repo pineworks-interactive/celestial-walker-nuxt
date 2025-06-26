@@ -204,7 +204,7 @@ onMounted(() => {
       >
         <g
           :transform="`translate(${nwProps.x}, ${nwProps.y}) scale(${nwProps.scaleX}, ${nwProps.scaleY})`"
-          style="pointer-events: auto; cursor: pointer"
+          class="interactive-corner"
           @click="openMenu"
         >
           <CornerNW />
@@ -279,15 +279,19 @@ onMounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 10;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
   pointer-events: none;
 }
 
-.scene-overlay-container svg {
+#overlay-svg {
   width: 100%;
   height: 100%;
-  pointer-events: none;
+}
+
+.interactive-corner {
+  pointer-events: auto;
+  cursor: pointer;
 }
 </style>
