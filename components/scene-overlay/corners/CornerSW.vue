@@ -19,7 +19,13 @@ const targetName = computed(() => hoveredBody.value?.name || 'Target')
       stroke-width="3"
       stroke-linecap="square"
     />
-    <text x="20" y="25" class="target-text">
+    <text
+      x="140"
+      y="20"
+      class="target-text"
+      text-anchor="middle"
+      dominant-baseline="middle"
+    >
       {{ targetName.toUpperCase() }}
     </text>
   </g>
@@ -40,9 +46,9 @@ const targetName = computed(() => hoveredBody.value?.name || 'Target')
     'Open Sans',
     'Helvetica Neue',
     sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   user-select: none;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.3em;
 }
 </style>
