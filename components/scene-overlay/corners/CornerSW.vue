@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { hoveredBody } from '@/composables/interactionState'
+import { hoveredBody, selectedBody } from '@/composables/interactionState'
 import { colors } from '@/configs/colors.config'
 
-const targetName = computed(() => hoveredBody.value?.name || 'Target')
+const targetName = computed(() => selectedBody.value?.name || hoveredBody.value?.name || 'Target')
 </script>
 
 <template>
@@ -19,15 +19,18 @@ const targetName = computed(() => hoveredBody.value?.name || 'Target')
       stroke-width="3"
       stroke-linecap="square"
     />
-    <text
-      x="140"
-      y="20"
-      class="target-text"
-      text-anchor="middle"
-      dominant-baseline="middle"
-    >
-      {{ targetName.toUpperCase() }}
-    </text>
+    <transition name="fade-text" mode="out-in">
+      <text
+        :key="targetName"
+        x="140"
+        y="22"
+        class="target-text"
+        text-anchor="middle"
+        dominant-baseline="middle"
+      >
+        {{ targetName.toUpperCase() }}
+      </text>
+    </transition>
   </g>
 </template>
 
@@ -50,5 +53,15 @@ const targetName = computed(() => hoveredBody.value?.name || 'Target')
   font-weight: 600;
   user-select: none;
   letter-spacing: 0.3em;
+}
+
+.fade-text-enter-active,
+.fade-text-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-text-enter-from,
+.fade-text-leave-to {
+  opacity: 0;
 }
 </style>
