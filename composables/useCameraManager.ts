@@ -5,19 +5,28 @@ import { gsap } from 'gsap'
 import { MathUtils, Vector3 } from 'three'
 import { ref } from 'vue'
 import { outlinedObjects } from '@/composables/effectsState'
+import { isCameraFollowing } from '@/composables/interactionState'
 import { cameraInitialPosition } from '@/configs/scene.config'
 
 const FOCAL_LENGTH_MULTIPLIER = 1.5
 let focusAnimation: gsap.core.Tween | null = null
 
+const cameraDistance = ref(0)
+
 /**
- * Manages camera movements like focusing on objects and resetting the view.
+ * # Manages camera movements like focusing on objects and resetting the view.
  * @param camera The Three.js PerspectiveCamera instance.
  * @param controls The OrbitControls instance.
  */
 export function useCameraManager(camera: PerspectiveCamera, controls: OrbitControls) {
-  const isFollowing = ref(false)
   const lastTargetPosition = new Vector3()
+
+  const updateCameraDistance = () => {
+    cameraDistance.value = camera.position.distanceTo(controls.target)
+  }
+
+  // ? set initial distance
+  updateCameraDistance()
 
   const focusOnBody = (body: CelestialBodyState) => {
     const { mesh } = body
@@ -27,7 +36,7 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
     if (focusAnimation)
       focusAnimation.kill()
 
-    isFollowing.value = false
+    isCameraFollowing.value = false
 
     mesh.geometry.computeBoundingSphere()
     const sphere = mesh.geometry.boundingSphere
@@ -36,19 +45,18 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
       return
     }
 
-    // Store the starting positions for interpolation.
+    // ? store the starting positions for interpolation
     const startCamPos = camera.position.clone()
     const startTargetPos = controls.target.clone()
 
-    // Create a proxy object for GSAP to animate its 'progress' property.
+    // ? create a proxy object for GSAP to animate its 'progress' property
     const proxy = { progress: 0 }
 
     focusAnimation = gsap.to(proxy, {
-      progress: 1, // Animate progress from 0 to 1.
+      progress: 1, // ? animate progress (0 to 1)
       duration: 1.5,
       ease: 'power3.inOut',
       onUpdate() {
-        // On every frame, calculate the dynamic end-points.
         const endTargetPos = new Vector3()
         mesh.getWorldPosition(endTargetPos)
 
@@ -62,15 +70,18 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
           endTargetPos.z + finalDistance,
         )
 
-        // Interpolate camera and target positions based on the eased progress.
+        // ? interpolate camera and target positions based on the eased progress
         camera.position.copy(startCamPos).lerp(endCamPos, proxy.progress)
         controls.target.copy(startTargetPos).lerp(endTargetPos, proxy.progress)
+
+        updateCameraDistance()
       },
       onComplete() {
-        isFollowing.value = true
+        isCameraFollowing.value = true
         mesh.getWorldPosition(lastTargetPosition)
         outlinedObjects.value = []
         focusAnimation = null
+        updateCameraDistance()
       },
     })
   }
@@ -81,7 +92,7 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
       focusAnimation = null
     }
 
-    isFollowing.value = false
+    isCameraFollowing.value = false
     controls.enabled = true
 
     gsap.to(camera.position, { ...cameraInitialPosition, duration: 1.5, ease: 'power3.inOut' })
@@ -89,7 +100,8 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
   }
 
   return {
-    isFollowing,
+    cameraDistance: readonly(cameraDistance),
+    isFollowing: isCameraFollowing,
     lastTargetPosition,
     focusOnBody,
     resetCamera,
