@@ -149,12 +149,12 @@ export function useCelestialBodyFactory() {
       planetScaledOrbitalRadius, // scaled orbit before offset
       centralBodyScaledRadiusOffset: centralBodyScaledRadius, // added offset
     }
-    console.warn(`DEBUG --> Creating orbit:
-      Planet Astro Dist (km): ${centerToCenterDistanceKm}, 
-      Planet Scaled Orbit Radius (3JS units): ${planetScaledOrbitalRadius.toFixed(2)}, 
-      Central Body Scaled Radius Offset (3JS units): ${centralBodyScaledRadius.toFixed(2)}, 
-      Final Effective Scaled Radius (3JS units): ${finalEffectiveScaledRadius.toFixed(2)}`,
-    )
+    // console.warn(`DEBUG --> Creating orbit:
+    //   Planet Astro Dist (km): ${centerToCenterDistanceKm},
+    //   Planet Scaled Orbit Radius (3JS units): ${planetScaledOrbitalRadius.toFixed(2)},
+    //   Central Body Scaled Radius Offset (3JS units): ${centralBodyScaledRadius.toFixed(2)},
+    //   Final Effective Scaled Radius (3JS units): ${finalEffectiveScaledRadius.toFixed(2)}`,
+    // )
 
     return orbit
   }
