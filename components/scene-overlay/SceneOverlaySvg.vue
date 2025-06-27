@@ -9,13 +9,15 @@ import CornerSW from '@/components/scene-overlay/corners/CornerSW.vue'
 import ExitFocusPrompt from '@/components/scene-overlay/ExitFocusPrompt.vue'
 import FloatingDrawerButton from '@/components/scene-overlay/FloatingDrawerButton.vue'
 import ZoomLevel from '@/components/scene-overlay/zoom-level/ZoomLevelField.vue'
-import { selectedBody } from '@/composables/interactionState'
+import { isCameraFollowing, selectedBody } from '@/composables/interactionState'
 import { colors } from '@/configs/colors.config'
 
 // * ViewBox's Overlay
 const overlayViewBoxWidth = 1920
 const overlayViewBoxHeight = 1080
 const overlayViewBox = computed(() => `0 0 ${overlayViewBoxWidth} ${overlayViewBoxHeight}`)
+
+const showFocusUI = computed(() => Boolean(selectedBody.value) && isCameraFollowing.value)
 
 // * Reactive window's dimensions
 const windowWidth = ref(1920)
@@ -275,26 +277,32 @@ onMounted(() => {
         @close="closeMenu"
       />
     </svg>
+
     <!-- Focus Mode UI -->
-    <div v-if="selectedBody" class="focus-ui-container">
-      <BodySymbol
-        :body="selectedBody"
-        class="body-symbol"
-        :style="{ transform: `scale(${finalScale})` }"
-      />
+    <transition name="fade">
       <div
-        class="top-center-container"
-        :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
+        v-if="showFocusUI"
+        class="focus-ui-container"
       >
-        <FloatingDrawerButton />
+        <BodySymbol
+          :body="selectedBody"
+          class="body-symbol"
+          :style="{ transform: `scale(${finalScale})` }"
+        />
+        <div
+          class="top-center-container"
+          :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
+        >
+          <FloatingDrawerButton />
+        </div>
+        <div
+          class="bottom-center-container"
+          :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
+        >
+          <ExitFocusPrompt />
+        </div>
       </div>
-      <div
-        class="bottom-center-container"
-        :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
-      >
-        <ExitFocusPrompt />
-      </div>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -319,6 +327,16 @@ onMounted(() => {
   cursor: pointer;
 }
 
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .focus-ui-container {
   position: absolute;
   top: 0;
@@ -330,8 +348,8 @@ onMounted(() => {
 
 .body-symbol {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 2.5%;
+  right: 2.5%;
   transform-origin: top right;
 }
 
