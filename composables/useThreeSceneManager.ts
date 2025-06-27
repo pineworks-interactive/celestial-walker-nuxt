@@ -26,6 +26,7 @@ import { celestialBodies, orbits } from '@/composables/visualisationState'
 import { useInteractionManager } from '@/composables/useInteractionManager'
 import { outlineColor, outlinedObjects, outlineParams } from '@/composables/effectsState'
 import { useCameraManager } from '@/composables/useCameraManager'
+import { useCamera } from '@/composables/useCamera'
 import { selectedBody } from '@/composables/interactionState'
 
 // ~ CONFIGS
@@ -88,6 +89,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   const { data: solarSystemData, loadData: loadSolarSystemData } = useSolarSystemData()
   const { createSun, createPlanet, createOrbit, updateOrbit, cleanup: cleanupCelestialBodies } = useCelestialBodyFactory()
   const { setZoomLevel } = useZoomManager()
+  const { setCameraDistance } = useCamera()
   const { registerCelestialBody, registerOrbit } = useDebugActions()
 
   /**
@@ -441,6 +443,12 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       // ? store the new position for the next frame's calculation
       cameraManager.lastTargetPosition.copy(currentTargetPosition)
     }
+
+    // * Update zoom level based on camera distance
+    const distance = camera.position.distanceTo(controls.target)
+    setCameraDistance(distance)
+    const currentZoomLevel = zoomThresholds.findIndex(threshold => distance < threshold)
+    setZoomLevel(currentZoomLevel === -1 ? 0 : 10 - currentZoomLevel)
 
     // * Update controls
     controls?.update()
