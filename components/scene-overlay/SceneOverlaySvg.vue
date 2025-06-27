@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import DrawerMenu from '@/components/scene-menu/DrawerMenu.vue'
+import BodySymbol from '@/components/scene-overlay/BodySymbol.vue'
 import CornerNE from '@/components/scene-overlay/corners/CornerNE.vue'
 import CornerNW from '@/components/scene-overlay/corners/CornerNW.vue'
 import CornerSE from '@/components/scene-overlay/corners/CornerSE.vue'
 import CornerSW from '@/components/scene-overlay/corners/CornerSW.vue'
+import ExitFocusPrompt from '@/components/scene-overlay/ExitFocusPrompt.vue'
+import FloatingDrawerButton from '@/components/scene-overlay/FloatingDrawerButton.vue'
 import ZoomLevel from '@/components/scene-overlay/zoom-level/ZoomLevelField.vue'
+import { selectedBody } from '@/composables/interactionState'
 import { colors } from '@/configs/colors.config'
 
 // * ViewBox's Overlay
@@ -271,6 +275,26 @@ onMounted(() => {
         @close="closeMenu"
       />
     </svg>
+    <!-- Focus Mode UI -->
+    <div v-if="selectedBody" class="focus-ui-container">
+      <BodySymbol
+        :body="selectedBody"
+        class="body-symbol"
+        :style="{ transform: `scale(${finalScale})` }"
+      />
+      <div
+        class="top-center-container"
+        :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
+      >
+        <FloatingDrawerButton />
+      </div>
+      <div
+        class="bottom-center-container"
+        :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
+      >
+        <ExitFocusPrompt />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -293,5 +317,40 @@ onMounted(() => {
 .interactive-corner {
   pointer-events: auto;
   cursor: pointer;
+}
+
+.focus-ui-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.body-symbol {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  transform-origin: top right;
+}
+
+.top-center-container {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform-origin: top center;
+  pointer-events: auto;
+}
+
+.bottom-center-container {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 </style>
