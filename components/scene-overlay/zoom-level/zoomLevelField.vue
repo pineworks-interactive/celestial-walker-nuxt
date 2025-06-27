@@ -32,12 +32,24 @@ const strokeColor = computed(() => {
 <template>
   <path d="M1 0L31 41H261L291 0" :stroke="strokeColor" stroke-linecap="round" />
   <text
+    x="33"
+    y="50"
+    :fill="strokeColor"
+    font-size="6"
+    font-weight="bold"
+    stroke="none"
+    letter-spacing="0.3em"
+  >
+    ZOOM LEVEL
+  </text>
+  <text
     v-if="isVoidZoom"
     x="146"
     y="25"
     :fill="colors.purple"
     font-size="25"
     font-weight="bold"
+    letter-spacing="0.3em"
     text-anchor="middle"
     stroke="none"
   >
@@ -48,8 +60,9 @@ const strokeColor = computed(() => {
     x="146"
     y="25"
     :fill="colors.red"
-    font-size="25"
+    font-size="20"
     font-weight="bold"
+    letter-spacing="0.3em"
     text-anchor="middle"
     stroke="none"
     class="slow-blinking-text"

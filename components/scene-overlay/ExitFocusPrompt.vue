@@ -18,6 +18,7 @@ import { colors } from '@/configs/colors.config'
   animation: blink-animation 2s infinite ease-in-out;
   pointer-events: none; /* No interaction needed */
   white-space: nowrap;
+  letter-spacing: 0.1em;
 }
 
 @keyframes blink-animation {

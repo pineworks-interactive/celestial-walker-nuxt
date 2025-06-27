@@ -9,27 +9,51 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// This is a placeholder for a more complex SVG based on the body's ID.
-const identifierText = computed(() => {
-  if (!props.body)
-    return ''
-  return `ID: ${props.body.name.toUpperCase()}`
+const symbols = {
+  sun: '<svg width="16" height="16" viewBox="0 0 12 12"><path style="fill:currentColor;fill-opacity:1;fill-rule:nonzero;stroke:none" d="M6 5.102a.899.899 0 1 0 0 1.797.899.899 0 0 0 0-1.797Z"/><path style="fill:none;stroke:currentColor;stroke-width:6;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1" d="M110 60c0 27.617-22.383 50-50 50S10 87.617 10 60s22.383-50 50-50 50 22.383 50 50z" transform="matrix(.1 0 0 -.1 0 12)"/></svg>',
+  moon: '<svg width="16" height="16" viewBox="0 0 12 12"><path d="M8.5 1a5 5 0 1 0 0 10C6.715 9.969 5.613 8.062 5.613 6S6.715 2.031 8.5 1Zm0 0" style="fill:none;stroke:currentColor;stroke-width:.6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-opacity:1;stroke-dasharray:none"/></svg>',
+  earth: '<svg width="16" height="16" viewBox="0 0 12 12"><path style="fill:none;stroke:currentColor;stroke-width:.6;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M11 6A5 5 0 1 0 1 6a5 5 0 0 0 10 0zm-5 5V1M1 6h10"/></svg>',
+} as const
+
+type SymbolKey = keyof typeof symbols
+
+/**
+ * ~ Type guard that checks if a string is a valid key of the symbols object
+ * @param key The key to validate.
+ * @returns True if the key is a valid SymbolKey.
+ */
+function isValidSymbolKey(key: string | undefined | null): key is SymbolKey {
+  if (!key)
+    return false
+  return key in symbols
+}
+
+const symbolSvg = computed(() => {
+  const bodyId = props.body?.id
+  if (isValidSymbolKey(bodyId)) {
+    return symbols[bodyId]
+  }
+  return ''
 })
 </script>
 
 <template>
-  <div class="identifier-container">
-    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="48" :stroke="colors.springGreen" stroke-width="4" />
-      <text x="50" y="55" text-anchor="middle" :fill="colors.springGreen" font-size="12" font-weight="bold">{{ identifierText }}</text>
-    </svg>
-  </div>
+  <div v-if="symbolSvg" class="symbol-container" v-html="symbolSvg" />
 </template>
 
 <style scoped>
-.identifier-container {
+.symbol-container {
   pointer-events: none;
   color: v-bind('colors.springGreen');
-  font-family: system-ui, sans-serif;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.symbol-container :deep(svg) {
+  width: 60%;
+  height: 60%;
 }
 </style>
