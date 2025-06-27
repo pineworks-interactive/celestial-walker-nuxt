@@ -10,4 +10,5 @@ export const colors = {
   pink: '#FFC0CB',
   // ~ --- Custom colors ---
   springGreen: '#00FF7F',
+  shadowedSpringGreen: '#00944a91',
 }
