@@ -22,7 +22,7 @@ export function useInteractionManager(
 
   function manageOutlineEffects() {
     watch([hoveredBody, selectedBody], ([newHovered, newSelected]) => {
-      // //console.log(`[2/3 EFFECT_WATCHER] Fired. Hovered: ${newHovered?.name || 'none'}. Selected: ${newSelected?.name || 'none'}.`)
+      // console.warn(`[2/3 EFFECT_WATCHER] Fired. Hovered: ${newHovered?.name || 'none'}. Selected: ${newSelected?.name || 'none'}.`)
       const objectsToOutline: Object3D[] = []
 
       // ? 1: A selected body gets a green outline.
@@ -36,7 +36,7 @@ export function useInteractionManager(
         outlineColor.value = HOVER_COLOR
       }
 
-      // //console.log(`[2/3 EFFECT_WATCHER] Decision: Outlining [${objectsToOutline.map(o => o.name).join(', ')}]`)
+      // console.warn(`[2/3 EFFECT_WATCHER] Decision: Outlining [${objectsToOutline.map(o => o.name).join(', ')}]`)
       // ? Update the global state that the OutlinePass watches.
       outlinedObjects.value = objectsToOutline
     })
@@ -59,6 +59,14 @@ export function useInteractionManager(
   }
 
   function checkHoverIntersection() {
+    // ? If a body is selected, we disable hover effects to prevent conflicts.
+    if (selectedBody.value) {
+      if (hoveredBody.value) {
+        // ? Clear any existing hover state.
+        hoveredBody.value = null
+      }
+      return
+    }
     raycaster.setFromCamera(mouse, camera)
     // ? need to filter out starfield as it seem to jam raycasting
     const interactiveObjects = scene.children.filter(child => child.name !== 'starfield')
@@ -75,13 +83,13 @@ export function useInteractionManager(
 
     if (bodyState) {
       if (hoveredBody.value?.id !== bodyState.id) {
-        // //console.log(`[1/3 INTERACTION] Hover detected. Setting hoveredBody to: ${bodyState.name}`)
+        // console.warn(`[1/3 INTERACTION] Hover detected. Setting hoveredBody to: ${bodyState.name}`)
         hoveredBody.value = bodyState
       }
     }
     else {
       if (hoveredBody.value) {
-        // //console.log('[1/3 INTERACTION] Hover lost. Setting hoveredBody to: null')
+        // console.warn('[1/3 INTERACTION] Hover lost. Setting hoveredBody to: null')
         hoveredBody.value = null
       }
     }
@@ -106,7 +114,9 @@ export function useInteractionManager(
   }
 
   function onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
+    // console.warn(`DEBUG --> : Key pressed: ${event.key}`)
+    if (event.key === ' ') {
+      // console.warn('DEBUG --> : Space key pressed, clearing selectedBody.')
       selectedBody.value = null
     }
   }
@@ -114,14 +124,15 @@ export function useInteractionManager(
   const init = () => {
     renderer.domElement.addEventListener('mousemove', onMouseMove)
     renderer.domElement.addEventListener('click', onClick)
-    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keydown', onKeyDown, true)
+    // console.warn('DEBUG --> : Interaction manager initialized, keydown listener added to document')
     manageOutlineEffects()
   }
 
   const dispose = () => {
     renderer.domElement.removeEventListener('mousemove', onMouseMove)
     renderer.domElement.removeEventListener('click', onClick)
-    window.removeEventListener('keydown', onKeyDown)
+    window.removeEventListener('keydown', onKeyDown, true)
   }
 
   return {
