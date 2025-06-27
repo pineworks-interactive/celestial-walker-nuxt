@@ -63,14 +63,11 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
   let controls: OrbitControls | null = null
   let composer: EffectComposer | null = null
   let outlinePass: OutlinePass | null = null
+  let cameraManager: ReturnType<typeof useCameraManager> | null = null
   let interactionManager: {
     init: () => void
     dispose: () => void
     checkHoverIntersection: () => void
-  } | null = null
-  let cameraManager: {
-    focusOnBody: (target: any) => void
-    resetCamera: () => void
   } | null = null
 
   // * State management
@@ -182,7 +179,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     if (renderer) {
       // * watch for changes in outlinedObjects
       watch(outlinedObjects, (newOutlinedObjects) => {
-        // //console.log(`[FINAL_CHECK] Renderer received objects:`, newOutlinedObjects)
+        // console.warn(`[FINAL_CHECK] Renderer received objects:`, newOutlinedObjects)
         if (outlinePass) {
           // Convert the Vue proxy and its children to a raw array for 3JS
           outlinePass.selectedObjects = toRaw(newOutlinedObjects).map(obj => toRaw(obj))
@@ -234,19 +231,19 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     if (solarSystemData.value && solarSystemData.value.sun) {
       // * Create Sun
       sun.value = await createSun(solarSystemData.value.sun)
-      // //console.warn('DEBUG --> : Sun mesh created:', sun.value)
+      // console.warn('DEBUG --> : Sun mesh created:', sun.value)
 
       if (sun.value) {
         sun.value.userData.id = solarSystemData.value.sun.id // ? id for raycasting
         scene.add(sun.value)
         registerCelestialBody('sun', 'Sun', sun.value)
-        // //console.warn('DEBUG --> : Is Sun mesh\'s parent the main scene?', sun.value.parent === scene)
+        // console.warn('DEBUG --> : Is Sun mesh\'s parent the main scene?', sun.value.parent === scene)
       }
 
       // sun's scaled radius
       const sunPhysicalRadiusKm = Number.parseFloat(solarSystemData.value.sun.physicalProps.meanRadius)
       const sunScaledRadius = sunPhysicalRadiusKm / scaleFactors.celestialBodyKmPerUnit
-      // //console.warn(`DEBUG --> : Sun physical radius (km): ${sunPhysicalRadiusKm}, Sun scaled radius (3JS units): ${sunScaledRadius.toFixed(2)}`)
+      // console.warn(`DEBUG --> : Sun physical radius (km): ${sunPhysicalRadiusKm}, Sun scaled radius (3JS units): ${sunScaledRadius.toFixed(2)}`)
 
       // * Create Earth and its orbit
       const earthData = solarSystemData.value.planets.earth
@@ -256,7 +253,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         if (earth.value) {
           earth.value.userData.id = earthData.id // ? id for raycasting
           registerCelestialBody('earth', 'Earth', earth.value)
-          // //console.warn('DEBUG --> : Earth mesh created:', earth.value)
+          // console.warn('DEBUG --> : Earth mesh created:', earth.value)
         }
 
         // earth's astronomical orbital distance (center to center)
@@ -270,7 +267,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         )
 
         earthOrbit.value.rotation.x = MathUtils.degToRad(earthOrbitInclination)
-        // //console.warn('DEBUG --> : Earth orbit object created:', earthOrbit.value)
+        // console.warn('DEBUG --> : Earth orbit object created:', earthOrbit.value)
 
         if (earth.value && earthOrbit.value) {
           earthOrbit.value.add(earth.value)
@@ -282,8 +279,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
             earthOrbitInclination,
           )
           scene.add(earthOrbit.value)
-          // //console.warn('DEBUG --> : Is Earth mesh\'s parent the Earth orbit object?', earth.value.parent === earthOrbit.value)
-          // //console.warn('DEBUG --> : Is Earth orbit\'s parent the main scene?', earthOrbit.value.parent === scene)
+          // console.warn('DEBUG --> : Is Earth mesh\'s parent the Earth orbit object?', earth.value.parent === earthOrbit.value)
+          // console.warn('DEBUG --> : Is Earth orbit\'s parent the main scene?', earthOrbit.value.parent === scene)
         }
 
         // * Create Moon
@@ -291,7 +288,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
         if (moonData) {
           moon.value = await createPlanet(moonData)
-          // //console.warn('DEBUG --> : Moon mesh created:', moon.value)
+          // console.warn('DEBUG --> : Moon mesh created:', moon.value)
           if (moon.value) {
             moon.value.userData.id = moonData.id // ? id for raycasting
             registerCelestialBody('moon', 'Moon', moon.value)
@@ -310,7 +307,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
             moonAstronomicalOrbitKm,
             earthScaledRadius,
           )
-          // //console.warn('DEBUG --> : Moon orbit object created:', moonOrbit.value)
+          // console.warn('DEBUG --> : Moon orbit object created:', moonOrbit.value)
 
           if (moon.value && moonOrbit.value) {
             moonOrbit.value.add(moon.value)
@@ -322,8 +319,8 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
               moonOrbitInclination,
             )
             scene.add(moonOrbit.value)
-            // //console.warn('DEBUG --> : Is Moon mesh\'s parent the Moon orbit object?', moon.value.parent === moonOrbit.value)
-            // //console.warn('DEBUG --> : Is Moon orbit\'s parent the Earth mesh?', moonOrbit.value.parent === earth.value)
+            // console.warn('DEBUG --> : Is Moon mesh\'s parent the Moon orbit object?', moon.value.parent === moonOrbit.value)
+            // console.warn('DEBUG --> : Is Moon orbit\'s parent the Earth mesh?', moonOrbit.value.parent === earth.value)
           }
         }
         else {
@@ -372,7 +369,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
    * # Animation loop
    */
   const animate = () => {
-    if (!isSceneBaseInit.value || !renderer || !camera)
+    if (!isSceneBaseInit.value || !renderer || !camera || !composer || !controls)
       return
 
     animationFrameId = requestAnimationFrame(animate)
@@ -398,14 +395,14 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
       updateOrbit(earthOrbit.value, simulatedTime, orbitalPeriod, semiMajorAxis)
 
-      // synchronize orbital helper host position
+      // ? synchronize orbital helper host position
       const earthOrbitState = orbits.value.find(orbit => orbit.id === 'earth-orbit')
       if (earthOrbitState)
         earthOrbitState.orbitalHelperHost.position.copy(earth.value.position)
     }
 
     if (moon.value && earth.value && moonOrbit.value && solarSystemData.value?.planets.earth.moons.moon) {
-      // Manually update the Moon's orbital pivot to follow the Earth's world position.
+      // ? manually update the Moon's orbital pivot to follow the Earth's world position
       moonOrbit.value.position.copy(earth.value.getWorldPosition(new Vector3()))
 
       const moonOrbitalPeriod = Number.parseFloat(
@@ -418,7 +415,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
       updateOrbit(moonOrbit.value, simulatedTime, moonOrbitalPeriod, moonSemiMajorAxis)
 
-      // synchronize orbital helper host position
+      // ? synchronize orbital helper host position
       const moonOrbitState = orbits.value.find(orbit => orbit.id === 'moon-orbit')
       if (moonOrbitState)
         moonOrbitState.orbitalHelperHost.position.copy(moon.value.position)
@@ -426,6 +423,24 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
     // * Check for hover intersection
     interactionManager?.checkHoverIntersection()
+
+    // * Update camera manager
+    if (cameraManager?.isFollowing.value && selectedBody.value?.mesh && controls) {
+      const currentTargetPosition = new Vector3()
+      selectedBody.value.mesh.getWorldPosition(currentTargetPosition)
+
+      // ? calculate how much the target has moved since the last frame
+      const delta = new Vector3().subVectors(currentTargetPosition, cameraManager.lastTargetPosition)
+
+      // ? apply this delta to the camera's current position to make it move with the target
+      camera.position.add(delta)
+
+      // ? update the control's target to the new position
+      controls.target.copy(currentTargetPosition)
+
+      // ? store the new position for the next frame's calculation
+      cameraManager.lastTargetPosition.copy(currentTargetPosition)
+    }
 
     // * Update controls
     controls?.update()
