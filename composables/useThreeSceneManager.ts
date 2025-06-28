@@ -287,6 +287,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
           registerOrbit(
             'earth-orbit',
             'Earth Orbit',
+            earthData.id,
             earthOrbit.value,
             earthOrbitRadius,
             earthOrbitInclination,
@@ -328,6 +329,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
             registerOrbit(
               'moon-orbit',
               'Moon Orbit',
+              moonData.id,
               moonOrbit.value,
               moonOrbitRadius,
               moonOrbitInclination,
