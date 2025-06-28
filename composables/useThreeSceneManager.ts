@@ -88,7 +88,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
   // * Solar system data management
   const { data: solarSystemData, loadData: loadSolarSystemData } = useSolarSystemData()
-  const { createSun, createPlanet, createOrbit, updateOrbit, cleanup: cleanupCelestialBodies } = useCelestialBodyFactory()
+  const { createSun, createPlanet, createOrbit, createOrbitLine, updateOrbit, cleanup: cleanupCelestialBodies } = useCelestialBodyFactory()
   const { setZoomLevel } = useZoomManager()
   const { setCameraDistance } = useCamera()
   const { registerCelestialBody, registerOrbit } = useDebugActions()
@@ -275,17 +275,22 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
           sunScaledRadius,
         )
 
+        const earthOrbitLine = createOrbitLine(earthOrbitRadius)
+        earthOrbitLine.rotation.x = MathUtils.degToRad(90) // ! Make it flat on the ecliptic plane
+        earthOrbitLine.userData.id = 'earth-orbit' // ? id for raycasting
+
         earthOrbit.value.rotation.x = MathUtils.degToRad(earthOrbitInclination)
         // console.warn('DEBUG --> : Earth orbit object created:', earthOrbit.value)
 
         if (earth.value && earthOrbit.value) {
-          earthOrbit.value.add(earth.value)
+          earthOrbit.value.add(earth.value, earthOrbitLine)
           registerOrbit(
             'earth-orbit',
             'Earth Orbit',
             earthOrbit.value,
             earthOrbitRadius,
             earthOrbitInclination,
+            earthOrbitLine,
           )
           scene.add(earthOrbit.value)
           // console.warn('DEBUG --> : Is Earth mesh\'s parent the Earth orbit object?', earth.value.parent === earthOrbit.value)
