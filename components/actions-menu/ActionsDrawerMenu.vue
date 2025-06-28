@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import MenuAccordionBodies from '@/components/scene-menu/MenuAccordionBodies.vue'
-import MenuAccordionOrbits from '@/components/scene-menu/MenuAccordionOrbits.vue'
+import MenuAccordionBodies from '@/components/actions-menu/MenuAccordionBodies.vue'
+import MenuAccordionOrbits from '@/components/actions-menu/MenuAccordionOrbits.vue'
 import { useDebugActions } from '@/composables/useVisualisation'
 import { globalAxes, globalGrids, globalWireframe } from '@/composables/visualisationState'
 import { colors } from '@/configs/colors.config'
@@ -94,24 +94,17 @@ const contentStyle = computed((): CSSProperties => {
     :style="{ pointerEvents: props.isOpen ? 'auto' : 'none' }"
     :class="{ 'drawer-open': props.isOpen }"
   >
-    <defs>
-      <linearGradient id="gradMenu" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" :stop-color="props.menuColor" stop-opacity="0.15" />
-        <stop offset="100%" :stop-color="props.menuColor" stop-opacity="0.05" />
-      </linearGradient>
-    </defs>
-
     <!-- * Drawer UI -->
     <rect
       :width="finalWidth"
       :height="props.height"
-      fill="url(#gradMenu)"
+      fill="transparent"
       :stroke="props.menuColor"
       stroke-width="2"
       style="transition: width 0.15s linear"
     />
 
-    <!-- * HTML Content -->
+    <!-- ~ HTML Content -->
     <foreignObject
       :width="finalWidth"
       :height="props.height"
@@ -174,9 +167,13 @@ const contentStyle = computed((): CSSProperties => {
 
 <style scoped>
 .drawer-content-wrapper {
-  color: #ffffff;
+  color: v-bind('colors.white');
   box-sizing: border-box;
   height: 100%;
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.7), rgba(30, 30, 30, 0.6));
+  backdrop-filter: blur(4px);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .drawer-content {
