@@ -1,5 +1,8 @@
 import type { CelestialBody, Planet, Sun } from '@/types/solarSystem.types'
 import * as THREE from 'three'
+import { Line2 } from 'three/addons/lines/Line2.js'
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { ref } from 'vue'
 import { colors } from '@/configs/colors.config'
 import { kmPerAu, scaleFactors } from '@/configs/scaling.config'
@@ -7,6 +10,7 @@ import { kmPerAu, scaleFactors } from '@/configs/scaling.config'
 export function useCelestialBodyFactory() {
   // * Store created meshes (cleanup)
   const createdMeshes = ref<THREE.Mesh[]>([])
+  const createdLines = ref<Line2[]>([])
 
   /**
    * # Creates a basic sphere geometry for a celestial body
@@ -160,6 +164,39 @@ export function useCelestialBodyFactory() {
   }
 
   /**
+   * # Creates a visual line for an orbit path.
+   * @param radius - The radius of the circular orbit in 3JS units.
+   * @param resolution - The number of points to form the circle.
+   */
+  const createOrbitLine = (radius: number, resolution: number = 128): Line2 => {
+    const points: number[] = []
+    for (let i = 0; i <= resolution; i++) {
+      const angle = (i / resolution) * 2 * Math.PI
+      const x = Math.cos(angle) * radius
+      const z = Math.sin(angle) * radius
+      points.push(x, 0, z)
+    }
+
+    const geometry = new LineGeometry()
+    geometry.setPositions(points)
+
+    const material = new LineMaterial({
+      color: colors.white,
+      linewidth: 2, // ? in px
+      dashed: false,
+      opacity: 0.5,
+      transparent: true,
+    })
+
+    const line = new Line2(geometry, material)
+    line.computeLineDistances()
+    line.scale.set(1, 1, 1)
+
+    createdLines.value.push(line)
+    return line
+  }
+
+  /**
    * # Updates the position of a celestial body in its orbit
    * @param pivot - The celestial body's parent pivot to update
    * @param time - The current simulation time
@@ -198,13 +235,19 @@ export function useCelestialBodyFactory() {
         mesh.material.dispose()
       }
     })
+    createdLines.value.forEach((line) => {
+      line.geometry.dispose()
+      line.material.dispose()
+    })
     createdMeshes.value = []
+    createdLines.value = []
   }
 
   return {
     createSun,
     createPlanet,
     createOrbit,
+    createOrbitLine,
     updateOrbit,
     cleanup,
   }
