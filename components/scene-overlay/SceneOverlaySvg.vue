@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import DrawerMenu from '@/components/scene-menu/DrawerMenu.vue'
+import ActionsDrawerMenu from '@/components/actions-menu/ActionsDrawerMenu.vue'
+import InfosWindowButton from '@/components/info-window/InfosWindowButton.vue'
 import BodySymbol from '@/components/scene-overlay/BodySymbol.vue'
 import CornerNE from '@/components/scene-overlay/corners/CornerNE.vue'
 import CornerNW from '@/components/scene-overlay/corners/CornerNW.vue'
 import CornerSE from '@/components/scene-overlay/corners/CornerSE.vue'
 import CornerSW from '@/components/scene-overlay/corners/CornerSW.vue'
 import ExitFocusPrompt from '@/components/scene-overlay/ExitFocusPrompt.vue'
-import FloatingDrawerButton from '@/components/scene-overlay/FloatingDrawerButton.vue'
 import ZoomLevel from '@/components/scene-overlay/zoom-level/ZoomLevelField.vue'
-import { isCameraFollowing, selectedBody } from '@/composables/interactionState'
+import { isCameraFollowing, isTacticalViewActive, selectedBody } from '@/composables/interactionState'
+import { toggleTacticalView } from '@/composables/useTacticalView'
 import { colors } from '@/configs/colors.config'
 
 // * ViewBox's Overlay
@@ -172,6 +173,11 @@ const drawerProps = computed(() => {
   return { x, y, height }
 })
 
+// * Tactical view toggle
+function handleTacticalViewToggle() {
+  toggleTacticalView()
+}
+
 onMounted(() => {
   // initial values
   windowHeight.value = window.innerHeight
@@ -227,8 +233,12 @@ onMounted(() => {
         </g>
         <g
           :transform="`translate(${seProps.x}, ${seProps.y}) scale(${seProps.scaleX}, ${seProps.scaleY})`"
+          class="interactive-corner"
         >
-          <CornerSE />
+          <CornerSE
+            v-model="isTacticalViewActive"
+            @toggle-tactical-view="handleTacticalViewToggle"
+          />
         </g>
         <g
           :transform="`translate(${zoomLevelProps.x}, ${zoomLevelProps.y}) scale(${zoomLevelProps.scaleX}, ${zoomLevelProps.scaleY})`"
@@ -268,7 +278,7 @@ onMounted(() => {
           :y2="swProps.y"
         />
       </g>
-      <DrawerMenu
+      <ActionsDrawerMenu
         :is-open="isMenuOpen"
         :x="drawerProps.x"
         :y="drawerProps.y"
@@ -293,7 +303,7 @@ onMounted(() => {
           class="top-center-container"
           :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
         >
-          <FloatingDrawerButton />
+          <InfosWindowButton />
         </div>
         <div
           class="bottom-center-container"

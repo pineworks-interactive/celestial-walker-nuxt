@@ -28,6 +28,7 @@ import { outlineColor, outlinedObjects, outlineParams } from '@/composables/effe
 import { useCameraManager } from '@/composables/useCameraManager'
 import { useCamera } from '@/composables/useCamera'
 import { selectedBody } from '@/composables/interactionState'
+import { registerTacticalViewToggle } from '@/composables/useTacticalView'
 
 // ~ CONFIGS
 import { kmPerAu, scaleFactors, timeConfig } from '@/configs/scaling.config'
@@ -121,6 +122,11 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     // eslint-disable-next-line ts/no-use-before-define
     setupCameraWatchers()
 
+    // * Register tactical view toggle
+    if (cameraManager) {
+      registerTacticalViewToggle(cameraManager.toggleTacticalView)
+    }
+
     // * Post-processing
     composer = new EffectComposer(renderer)
 
@@ -183,7 +189,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
       watch(outlinedObjects, (newOutlinedObjects) => {
         // console.warn(`[FINAL_CHECK] Renderer received objects:`, newOutlinedObjects)
         if (outlinePass) {
-          // Convert the Vue proxy and its children to a raw array for 3JS
+          // ? convert the vue proxy and its children to a raw array for 3JS
           outlinePass.selectedObjects = toRaw(newOutlinedObjects).map(obj => toRaw(obj))
         }
       }, { deep: true })
@@ -232,13 +238,14 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
 
     if (solarSystemData.value && solarSystemData.value.sun) {
       // * Create Sun
+      const sunData = solarSystemData.value.sun
       sun.value = await createSun(solarSystemData.value.sun)
       // console.warn('DEBUG --> : Sun mesh created:', sun.value)
 
       if (sun.value) {
         sun.value.userData.id = solarSystemData.value.sun.id // ? id for raycasting
         scene.add(sun.value)
-        registerCelestialBody('sun', 'Sun', sun.value)
+        registerCelestialBody(sunData.id, sunData.name, sunData.description, sun.value)
         // console.warn('DEBUG --> : Is Sun mesh\'s parent the main scene?', sun.value.parent === scene)
       }
 
@@ -254,7 +261,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
         earth.value = await createPlanet(earthData)
         if (earth.value) {
           earth.value.userData.id = earthData.id // ? id for raycasting
-          registerCelestialBody('earth', 'Earth', earth.value)
+          registerCelestialBody(earthData.id, earthData.name, earthData.description, earth.value)
           // console.warn('DEBUG --> : Earth mesh created:', earth.value)
         }
 
@@ -293,7 +300,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
           // console.warn('DEBUG --> : Moon mesh created:', moon.value)
           if (moon.value) {
             moon.value.userData.id = moonData.id // ? id for raycasting
-            registerCelestialBody('moon', 'Moon', moon.value)
+            registerCelestialBody(moonData.id, moonData.name, moonData.description, moon.value)
           }
 
           // moon's astronomical orbital distance (center to center)
@@ -457,7 +464,7 @@ export function useThreeSceneManager(options: SceneManagerOptions): SceneManager
     if (controls) {
       const distance = camera.position.distanceTo(controls.target)
 
-      // calculate zoom level based on zoom.config.ts
+      // ? calculate zoom level based on zoom.config.ts
       const thresholdIndex = zoomThresholds.findIndex(threshold => distance < threshold)
       const newZoomLevel = thresholdIndex === -1 ? 0 : zoomThresholds.length - thresholdIndex
       setZoomLevel(newZoomLevel)
