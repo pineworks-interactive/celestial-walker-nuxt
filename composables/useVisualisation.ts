@@ -1,4 +1,5 @@
 import type { Mesh } from 'three'
+import type { Line2 } from 'three/addons/lines/Line2.js'
 import { AxesHelper, GridHelper, Material, MathUtils, Object3D } from 'three'
 import {
   celestialBodies,
@@ -199,11 +200,21 @@ export function registerCelestialBody(id: string, name: string, description: str
  * # Registers an orbit for debugging.
  * @param id - The ID of the orbit
  * @param name - The name of the orbit
+ * @param bodyId - The ID of the celestial body this orbit belongs to
  * @param pivot - The pivot object of the orbit
  * @param radius - The radius of the orbit for sizing helpers
  * @param inclination - The inclination of the orbit in degrees
+ * @param lineMesh - The visual line mesh for the orbit path
  */
-export function registerOrbit(id: string, name: string, pivot: Object3D, radius: number, inclination: number) {
+export function registerOrbit(
+  id: string,
+  name: string,
+  bodyId: string,
+  pivot: Object3D,
+  radius: number,
+  inclination: number,
+  lineMesh?: Line2,
+) {
   // console.warn(`Attempting to register orbit: ${name} (id: ${id})`)
   if (!_findOrbit(id)) {
     const size = 1.5 * radius
@@ -216,7 +227,9 @@ export function registerOrbit(id: string, name: string, pivot: Object3D, radius:
     orbits.value.push({
       id,
       name,
+      bodyId,
       pivot,
+      lineMesh,
       orbitalHelperHost,
       hasAxesHelpers: false,
       hasGridHelpers: false,
