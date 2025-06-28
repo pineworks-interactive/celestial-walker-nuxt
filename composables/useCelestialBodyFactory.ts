@@ -71,6 +71,7 @@ export function useCelestialBodyFactory() {
     const material = await createBasicMaterial(body.textures.main)
 
     const mesh = new THREE.Mesh(geometry, material)
+    mesh.name = body.name
     createdMeshes.value.push(mesh)
 
     return mesh
@@ -128,8 +129,10 @@ export function useCelestialBodyFactory() {
     centerToCenterDistanceKm: number,
     centralBodyScaledRadius: number = 0, // default to 0 if no offset needed
     speed: number = 0.1,
+    orbitName: string = '',
   ): THREE.Object3D => {
     const orbit = new THREE.Object3D()
+    orbit.name = orbitName
 
     // * Scale the planet's astronomical orbital distance (center-to-center)
     const planetOrbitalRadiusAu = centerToCenterDistanceKm / kmPerAu
@@ -146,12 +149,12 @@ export function useCelestialBodyFactory() {
       planetScaledOrbitalRadius, // scaled orbit before offset
       centralBodyScaledRadiusOffset: centralBodyScaledRadius, // added offset
     }
-    console.warn(`DEBUG --> Creating orbit:
-      Planet Astro Dist (km): ${centerToCenterDistanceKm}, 
-      Planet Scaled Orbit Radius (3JS units): ${planetScaledOrbitalRadius.toFixed(2)}, 
-      Central Body Scaled Radius Offset (3JS units): ${centralBodyScaledRadius.toFixed(2)}, 
-      Final Effective Scaled Radius (3JS units): ${finalEffectiveScaledRadius.toFixed(2)}`,
-    )
+    // console.warn(`DEBUG --> Creating orbit:
+    //   Planet Astro Dist (km): ${centerToCenterDistanceKm},
+    //   Planet Scaled Orbit Radius (3JS units): ${planetScaledOrbitalRadius.toFixed(2)},
+    //   Central Body Scaled Radius Offset (3JS units): ${centralBodyScaledRadius.toFixed(2)},
+    //   Final Effective Scaled Radius (3JS units): ${finalEffectiveScaledRadius.toFixed(2)}`,
+    // )
 
     return orbit
   }

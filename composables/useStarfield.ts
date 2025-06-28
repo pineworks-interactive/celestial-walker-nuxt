@@ -49,6 +49,7 @@ export function useStarfield(scene: Scene, options: StarfieldOptions) {
 
   // * Starfield object
   const starfield = new Points(geometry, material)
+  starfield.name = 'starfield'
   scene.add(starfield)
 
   // * Cleanup function

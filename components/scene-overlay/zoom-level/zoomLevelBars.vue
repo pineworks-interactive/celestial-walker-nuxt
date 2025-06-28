@@ -4,10 +4,12 @@ import { colors } from '@/configs/colors.config'
 
 interface Props {
   zoomLevel: number
+  isMaxZoomIn: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   zoomLevel: 0,
+  isMaxZoom: false,
 })
 
 const bars = computed(() => [
@@ -35,9 +37,34 @@ const visibleBarsCount = computed(() => Math.round(props.zoomLevel))
       :fill="colors.springGreen"
       :visibility="index < visibleBarsCount ? 'visible' : 'hidden'"
     />
+    <text
+      v-if="isMaxZoomIn"
+      x="252.5"
+      y="10"
+      :fill="colors.black"
+      font-size="8"
+      stroke="none"
+      font-weight="bold"
+      text-anchor="middle"
+      class="blinking-text"
+    >
+      MAX
+    </text>
   </g>
 </template>
 
 <style scoped>
+.blinking-text {
+  animation: blink 1s infinite;
+}
 
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
 </style>

@@ -10,11 +10,6 @@ import {
 
 // ~ --- Private Helper Functions ---
 
-function _log(message: string, data?: any) {
-  // eslint-disable-next-line no-console
-  console.log(`[DebugActions] ${message}`, data || '')
-}
-
 const _findBody = (id: string) => celestialBodies.value.find(body => body.id === id)
 const _findOrbit = (id: string) => orbits.value.find(orbit => orbit.id === id)
 
@@ -30,7 +25,6 @@ function _toggleHelperVisibility(helper: AxesHelper | GridHelper | undefined, sh
     if (helper) {
       if (helper.material instanceof Material) {
         helper.material.depthTest = false
-        // ? ensure material is recompiled if needed
         helper.material.needsUpdate = true
       }
       parent.add(helper)
@@ -50,7 +44,7 @@ function _toggleHelperVisibility(helper: AxesHelper | GridHelper | undefined, sh
  * @param id - The ID of the celestial body
  */
 export function toggleBodyWireframe(id: string) {
-  _log(`toggleBodyWireframe called with id: ${id}`)
+  // console.warn(`toggleBodyWireframe called with id: ${id}`)
   const body = _findBody(id)
   if (body) {
     const material = body.mesh.material
@@ -80,12 +74,12 @@ export function toggleBodyWireframe(id: string) {
  * @param forced - A specific boolean state to force
  */
 export function toggleBodyAxisHelper(id: string, forced?: boolean) {
-  _log(`toggleBodyAxisHelper called with id: ${id} (forced: ${forced})`)
+  // console.warn(`toggleBodyAxisHelper called with id: ${id} (forced: ${forced})`)
   const body = _findBody(id)
   if (body) {
     body.hasAxesHelpers = forced ?? !body.hasAxesHelpers
     _toggleHelperVisibility(body.axesHelper, body.hasAxesHelpers, body.mesh)
-    _log(`> Toggling axes helper for ${body.name} to ${body.hasAxesHelpers}`)
+    // console.warn(`> Toggling axes helper for ${body.name} to ${body.hasAxesHelpers}`)
   }
 }
 
@@ -95,12 +89,12 @@ export function toggleBodyAxisHelper(id: string, forced?: boolean) {
  * @param forced - A specific boolean state to force
  */
 export function toggleBodyGridHelper(id: string, forced?: boolean) {
-  _log(`toggleBodyGridHelper called with id: ${id} (forced: ${forced})`)
+  // console.warn(`toggleBodyGridHelper called with id: ${id} (forced: ${forced})`)
   const body = _findBody(id)
   if (body) {
     body.hasGridHelpers = forced ?? !body.hasGridHelpers
     _toggleHelperVisibility(body.gridHelper, body.hasGridHelpers, body.mesh)
-    _log(`> Toggling grid helper for ${body.name} to ${body.hasGridHelpers}`)
+    // console.warn(`> Toggling grid helper for ${body.name} to ${body.hasGridHelpers}`)
   }
 }
 
@@ -110,12 +104,12 @@ export function toggleBodyGridHelper(id: string, forced?: boolean) {
  * @param forced - A specific boolean state to force
  */
 export function toggleOrbitAxisHelper(id: string, forced?: boolean) {
-  _log(`toggleOrbitAxisHelper called with id: ${id} (forced: ${forced})`)
+  // console.warn(`toggleOrbitAxisHelper called with id: ${id} (forced: ${forced})`)
   const orbit = _findOrbit(id)
   if (orbit) {
     orbit.hasAxesHelpers = forced ?? !orbit.hasAxesHelpers
     _toggleHelperVisibility(orbit.axesHelper, orbit.hasAxesHelpers, orbit.orbitalHelperHost)
-    _log(`> Toggling axes helper for ${orbit.name} to ${orbit.hasAxesHelpers}`)
+    // console.warn(`> Toggling axes helper for ${orbit.name} to ${orbit.hasAxesHelpers}`)
   }
 }
 
@@ -125,12 +119,12 @@ export function toggleOrbitAxisHelper(id: string, forced?: boolean) {
  * @param forced - A specific boolean state to force
  */
 export function toggleOrbitGridHelper(id: string, forced?: boolean) {
-  _log(`toggleOrbitGridHelper called with id: ${id} (forced: ${forced})`)
+  // console.warn(`toggleOrbitGridHelper called with id: ${id} (forced: ${forced})`)
   const orbit = _findOrbit(id)
   if (orbit) {
     orbit.hasGridHelpers = forced ?? !orbit.hasGridHelpers
     _toggleHelperVisibility(orbit.gridHelper, orbit.hasGridHelpers, orbit.orbitalHelperHost)
-    _log(`> Toggling grid helper for ${orbit.name} to ${orbit.hasGridHelpers}`)
+    // console.warn(`> Toggling grid helper for ${orbit.name} to ${orbit.hasGridHelpers}`)
   }
 }
 
@@ -138,32 +132,32 @@ export function toggleOrbitGridHelper(id: string, forced?: boolean) {
  * # Toggles the global wireframe state for all celestial bodies.
  */
 export function toggleGlobalWireframe() {
-  _log('toggleGlobalWireframe called')
+  // console.warn('toggleGlobalWireframe called')
   globalWireframe.value = !globalWireframe.value
   celestialBodies.value.forEach(body => (toggleBodyWireframe(body.id)))
-  _log(`> Global wireframe toggled to ${globalWireframe.value}`)
+  // console.warn(`> Global wireframe toggled to ${globalWireframe.value}`)
 }
 
 /**
  * # Toggles the global AxesHelper state for all bodies and orbits.
  */
 export function toggleGlobalAxes() {
-  _log('toggleGlobalAxes called')
+  // console.warn('toggleGlobalAxes called')
   globalAxes.value = !globalAxes.value
   celestialBodies.value.forEach(body => toggleBodyAxisHelper(body.id, globalAxes.value))
   orbits.value.forEach(orbit => toggleOrbitAxisHelper(orbit.id, globalAxes.value))
-  _log(`> Global axes toggled to ${globalAxes.value}`)
+  // console.warn(`> Global axes toggled to ${globalAxes.value}`)
 }
 
 /**
  * # Toggles the global GridHelper state for all bodies and orbits.
  */
 export function toggleGlobalGrids() {
-  _log('toggleGlobalGrids called')
+  // console.warn('toggleGlobalGrids called')
   globalGrids.value = !globalGrids.value
   celestialBodies.value.forEach(body => toggleBodyGridHelper(body.id, globalGrids.value))
   orbits.value.forEach(orbit => toggleOrbitGridHelper(orbit.id, globalGrids.value))
-  _log(`> Global grids toggled to ${globalGrids.value}`)
+  // console.warn(`> Global grids toggled to ${globalGrids.value}`)
 }
 
 /**
@@ -172,8 +166,13 @@ export function toggleGlobalGrids() {
  * @param name - The name of the body
  * @param mesh - The mesh of the body
  */
-export function registerCelestialBody(id: string, name: string, mesh: Mesh) {
-  _log(`Attempting to register celestial body: ${name} (id: ${id})`)
+export function registerCelestialBody(id: string, name: string, description: string, mesh: Mesh) {
+  // console.warn(`Attempting to register celestial body: ${name} (id: ${id})`)
+  // console.warn(`%c[REGISTERING] %c${name}`, 'color: blue; font-weight: bold;', 'color: default;', {
+  //   name: mesh.name,
+  //   uuid: mesh.uuid,
+  //   userData: JSON.parse(JSON.stringify(mesh.userData)),
+  // })
   if (!_findBody(id)) {
     // ? safely compute the bounding sphere to get the radius for the helpers
     if (!mesh.geometry.boundingSphere) {
@@ -184,6 +183,7 @@ export function registerCelestialBody(id: string, name: string, mesh: Mesh) {
     celestialBodies.value.push({
       id,
       name,
+      description,
       mesh,
       isWireframe: false,
       hasAxesHelpers: false,
@@ -191,7 +191,7 @@ export function registerCelestialBody(id: string, name: string, mesh: Mesh) {
       axesHelper: new AxesHelper(size),
       gridHelper: new GridHelper(size, 10),
     })
-    _log(`> Successfully registered ${name}. Total bodies: ${celestialBodies.value.length}`)
+    // console.warn(`> Successfully registered ${name}. Total bodies: ${celestialBodies.value.length}`)
   }
 }
 
@@ -204,7 +204,7 @@ export function registerCelestialBody(id: string, name: string, mesh: Mesh) {
  * @param inclination - The inclination of the orbit in degrees
  */
 export function registerOrbit(id: string, name: string, pivot: Object3D, radius: number, inclination: number) {
-  _log(`Attempting to register orbit: ${name} (id: ${id})`)
+  // console.warn(`Attempting to register orbit: ${name} (id: ${id})`)
   if (!_findOrbit(id)) {
     const size = 1.5 * radius
 
@@ -223,7 +223,7 @@ export function registerOrbit(id: string, name: string, pivot: Object3D, radius:
       axesHelper: new AxesHelper(size),
       gridHelper: new GridHelper(size, 10),
     })
-    _log(`> Successfully registered ${name}. Total orbits: ${orbits.value.length}`)
+    // console.warn(`> Successfully registered ${name}. Total orbits: ${orbits.value.length}`)
   }
 }
 

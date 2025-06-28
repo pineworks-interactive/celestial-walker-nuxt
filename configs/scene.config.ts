@@ -10,10 +10,6 @@ export const cameraInitialPosition = {
   x: 0,
   y: 75,
   z: 1000,
-  screenSpacePanning: true,
-  minDistance: 0.1,
-  maxDistance: 20000,
-  maxPolarAngle: Math.PI / 2,
 }
 
 export const rendererConfig = {

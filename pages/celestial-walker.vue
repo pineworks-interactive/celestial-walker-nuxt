@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import InfosWindow from '@/components/info-window/InfosWindow.vue'
 import SceneOverlay from '@/components/scene-overlay/SceneOverlaySvg.vue'
 import { useThreeSceneManager } from '@/composables/useThreeSceneManager'
 import { sceneConfig } from '@/configs/scene.config'
@@ -9,6 +10,7 @@ useThreeSceneManager(sceneConfig)
 <template>
   <canvas id="canvas" class="w-full h-screen" />
   <SceneOverlay />
+  <InfosWindow />
 </template>
 
 <style scoped>

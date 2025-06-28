@@ -1,17 +1,24 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import DrawerMenu from '@/components/scene-menu/DrawerMenu.vue'
+import ActionsDrawerMenu from '@/components/actions-menu/ActionsDrawerMenu.vue'
+import InfosWindowButton from '@/components/info-window/InfosWindowButton.vue'
+import BodySymbol from '@/components/scene-overlay/BodySymbol.vue'
 import CornerNE from '@/components/scene-overlay/corners/CornerNE.vue'
 import CornerNW from '@/components/scene-overlay/corners/CornerNW.vue'
 import CornerSE from '@/components/scene-overlay/corners/CornerSE.vue'
 import CornerSW from '@/components/scene-overlay/corners/CornerSW.vue'
+import ExitFocusPrompt from '@/components/scene-overlay/ExitFocusPrompt.vue'
 import ZoomLevel from '@/components/scene-overlay/zoom-level/ZoomLevelField.vue'
+import { isCameraFollowing, isTacticalViewActive, selectedBody } from '@/composables/interactionState'
+import { toggleTacticalView } from '@/composables/useTacticalView'
 import { colors } from '@/configs/colors.config'
 
 // * ViewBox's Overlay
 const overlayViewBoxWidth = 1920
 const overlayViewBoxHeight = 1080
 const overlayViewBox = computed(() => `0 0 ${overlayViewBoxWidth} ${overlayViewBoxHeight}`)
+
+const showFocusUI = computed(() => Boolean(selectedBody.value) && isCameraFollowing.value)
 
 // * Reactive window's dimensions
 const windowWidth = ref(1920)
@@ -166,6 +173,11 @@ const drawerProps = computed(() => {
   return { x, y, height }
 })
 
+// * Tactical view toggle
+function handleTacticalViewToggle() {
+  toggleTacticalView()
+}
+
 onMounted(() => {
   // initial values
   windowHeight.value = window.innerHeight
@@ -204,7 +216,7 @@ onMounted(() => {
       >
         <g
           :transform="`translate(${nwProps.x}, ${nwProps.y}) scale(${nwProps.scaleX}, ${nwProps.scaleY})`"
-          style="pointer-events: auto; cursor: pointer"
+          class="interactive-corner"
           @click="openMenu"
         >
           <CornerNW />
@@ -221,8 +233,12 @@ onMounted(() => {
         </g>
         <g
           :transform="`translate(${seProps.x}, ${seProps.y}) scale(${seProps.scaleX}, ${seProps.scaleY})`"
+          class="interactive-corner"
         >
-          <CornerSE />
+          <CornerSE
+            v-model="isTacticalViewActive"
+            @toggle-tactical-view="handleTacticalViewToggle"
+          />
         </g>
         <g
           :transform="`translate(${zoomLevelProps.x}, ${zoomLevelProps.y}) scale(${zoomLevelProps.scaleX}, ${zoomLevelProps.scaleY})`"
@@ -262,7 +278,7 @@ onMounted(() => {
           :y2="swProps.y"
         />
       </g>
-      <DrawerMenu
+      <ActionsDrawerMenu
         :is-open="isMenuOpen"
         :x="drawerProps.x"
         :y="drawerProps.y"
@@ -271,6 +287,32 @@ onMounted(() => {
         @close="closeMenu"
       />
     </svg>
+
+    <!-- Focus Mode UI -->
+    <transition name="fade">
+      <div
+        v-if="showFocusUI"
+        class="focus-ui-container"
+      >
+        <BodySymbol
+          :body="selectedBody"
+          class="body-symbol"
+          :style="{ transform: `scale(${finalScale})` }"
+        />
+        <div
+          class="top-center-container"
+          :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
+        >
+          <InfosWindowButton />
+        </div>
+        <div
+          class="bottom-center-container"
+          :style="{ transform: `translateX(-50%) scale(${finalScale})` }"
+        >
+          <ExitFocusPrompt />
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -279,15 +321,64 @@ onMounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 10;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
   pointer-events: none;
 }
 
-.scene-overlay-container svg {
+#overlay-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.interactive-corner {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.focus-ui-container {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.body-symbol {
+  position: absolute;
+  top: 2.5%;
+  right: 2.5%;
+  transform-origin: top right;
+}
+
+.top-center-container {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform-origin: top center;
+  pointer-events: auto;
+}
+
+.bottom-center-container {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 </style>

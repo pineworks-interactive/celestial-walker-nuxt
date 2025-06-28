@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import MenuAccordionCheckbox from '@/components/scene-menu/MenuAccordionCheckbox.vue'
+import MenuAccordionCheckbox from '@/components/actions-menu/MenuAccordionCheckbox.vue'
 import { useDebugActions } from '@/composables/useVisualisation'
 import { celestialBodiesForUI } from '@/composables/visualisationState'
 
