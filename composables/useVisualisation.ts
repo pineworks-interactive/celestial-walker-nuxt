@@ -25,7 +25,6 @@ function _toggleHelperVisibility(helper: AxesHelper | GridHelper | undefined, sh
     if (helper) {
       if (helper.material instanceof Material) {
         helper.material.depthTest = false
-        // ? ensure material is recompiled if needed
         helper.material.needsUpdate = true
       }
       parent.add(helper)
@@ -167,7 +166,7 @@ export function toggleGlobalGrids() {
  * @param name - The name of the body
  * @param mesh - The mesh of the body
  */
-export function registerCelestialBody(id: string, name: string, mesh: Mesh) {
+export function registerCelestialBody(id: string, name: string, description: string, mesh: Mesh) {
   // console.warn(`Attempting to register celestial body: ${name} (id: ${id})`)
   // console.warn(`%c[REGISTERING] %c${name}`, 'color: blue; font-weight: bold;', 'color: default;', {
   //   name: mesh.name,
@@ -184,6 +183,7 @@ export function registerCelestialBody(id: string, name: string, mesh: Mesh) {
     celestialBodies.value.push({
       id,
       name,
+      description,
       mesh,
       isWireframe: false,
       hasAxesHelpers: false,

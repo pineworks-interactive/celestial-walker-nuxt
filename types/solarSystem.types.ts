@@ -74,6 +74,7 @@ export interface CelestialBodyState {
   id: string
   name: string
   mesh: Mesh
+  description: string
   isWireframe: boolean
   hasAxesHelpers: boolean
   hasGridHelpers: boolean
