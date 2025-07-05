@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { gsap } from 'gsap'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
-import { isTacticalViewActive } from '@/composables/interactionState'
+import { isTacticalViewActive } from '~/composables/state/interactionState'
 import { colors } from '@/configs/colors.config'
 
 interface Props {

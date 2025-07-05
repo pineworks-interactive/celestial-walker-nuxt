@@ -1,482 +1,973 @@
-# Nuxt Portfolio Project
+# Architecture Guide
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+## Table of Contents
 
-## Setup
+### English
 
-Make sure to install dependencies:
+1. [Architecture Overview](#architecture-overview)
+2. [Core Composables](#core-composables)
+3. [Data Management](#data-management)
+4. [Factories](#factories)
+5. [Features](#features)
+6. [State Management](#state-management)
+7. [Scene Orchestrator](#scene-orchestrator)
+8. [Usage Examples](#usage-examples)
+9. [Best Practices](#best-practices)
 
-```bash
-# npm
-npm install
+### Français
 
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+1. [Vue d'ensemble de l'architecture](#vue-densemble-de-larchitecture)
+2. [Composables de base](#composables-de-base)
+3. [Gestion des données](#gestion-des-données)
+4. [Factories](#factories-fr)
+5. [Fonctionnalités](#fonctionnalités)
+6. [Gestion d'état](#gestion-détat)
+7. [Orchestrateur de scène](#orchestrateur-de-scène)
+8. [Exemples d'utilisation](#exemples-dutilisation)
+9. [Bonnes pratiques](#bonnes-pratiques)
 
 ---
 
-## Mission Details
+# English Documentation
 
-### Phase 1: Requirements Analysis
+## Architecture Overview
 
-**1. Functional Requirements:**
+The composables directory follows a clean, modular architecture based on the Single Responsibility Principle. Each composable handles a specific aspect of the 3JS solar system visualization application.
 
-- **Application Framework:** Nuxt.js
-- **Home Page (`/`):**
-  - Presents buttons/links for users to choose and navigate to one of the three subpages (`/shop-list`, `/showcase`, `/celestial-walker`)
-- **Shopping-List App (`/shop-list`):**
-  - Accessible at this route
-  - Placeholder: `<h1>Shopping List</h1>` and `<h2>Work in progress</h2>`
-- **3D Artworks Showcase (`/showcase`):**
-  - Accessible at this route
-  - Will use Three.js
-  - Placeholder: `<h1>3D Artworks Showcase</h1>` and `<h2>Work in progress</h2>`
-- **Solar System Representation (`/celestial-walker`):**
-  - Accessible at this route
-  - Built with Three.js
-  - **Realism:** Aims for high astronomical accuracy; all specific data (planet properties, textures, orbital mechanics) will be provided by the user
-  - **Data Source:** Celestial body properties and orbital data loaded from a static JSON file
-  - **Scene Details:**
-    - Background: Black
-    - Lighting: Soft ambient light
-    - Stars: Particles, randomly scattered within a spherical boundary
-    - Sun:
-      - Geometry: Spherical
-      - Properties: Emits light, texture
-      - Effect: Glow/bloom post-processing effect, targeting only the Sun
-  - **Celestial Bodies:**
-    - Planets: Orbit the Sun, each with user-provided textures
-      - Earth: Multiple textures (day, night, specular, normal maps)
-      - Planets with Rings: Saturn and Uranus (prominent rings)
-      - Planets with Faint Rings: Jupiter and Neptune
-    - Dwarf Planets: Orbit the Sun at user-defined distances (e.g., Ceres, Haumea, Makemake, Eris)
-    - Moons: Orbit their respective parent planets, based on user-provided data
-  - **Visual Aids:**
-    - Orbit Trails: Simple lines with 0.5 opacity for all orbiting objects. Thickness dynamically adjusts with camera zoom
-  - **Interactivity:**
-    - Camera Controls: User-controlled zoom, pan, and rotation
-    - Hover Effect: On hovering a celestial object, the object and its orbit trail are highlighted with a user-specified color
-    - Click Effect: Clicking a celestial object triggers a camera animation to focus on it, and a floating card displays its information
-
-**2. Implied Requirements (Updated):**
-
-- **Routing:** Nuxt.js handles navigation
-- **3D Rendering Context:** Three.js `<canvas>`
-- **Asset Management:** Nuxt's `public/` directory for textures and the static JSON data file. Efficient loading mechanisms
-- **State Management (for `/celestial-walker`):**
-  - Current camera position/target
-  - Selected object for information display
-  - Hovered object
-- **UI Components (for `/celestial-walker`):**
-  - Floating information card for celestial bodies
-- **Event Handling:** Mouse interactions (hover, click) on the Three.js canvas
-
-**3. Non-Functional Requirements:**
-
-- **Performance:** Crucial for a smooth 3D experience
-- **Maintainability:** Adherence to best practices and custom instructions
-- **Scalability:** Future extensibility
-- **Code Quality:** Typed, documented, organized
-
-**4. Clarifying Questions:**
-
-- None at this moment. Your answers were comprehensive.
-
-**5. Current Understanding Confidence:** 90%
-
----
-
-### Phase 2: System Context Examination
-
-**1. Existing Codebase:**
-
-- This is a new Nuxt.js application. The current workspace only contains `.gitignore` and `LICENSE`. We will be setting up the Nuxt project structure.
-- I'll request to list the directory structure once Nuxt is initialized to understand its default layout.
-
-**2. Key Nuxt.js Features & Integration Points:**
-
-- **Directory Structure:** We will leverage Nuxt's standard directories:
-  - `pages/`: For top-level routes like `index.vue` (home), `shop-list.vue`, `showcase.vue`, and `celestial-walker.vue`
-  - `components/`: For reusable Vue components (e.g., the celestial body info card, buttons for the home page)
-  - `composables/`: For Three.js logic, data fetching, state management related to the solar system
-  - `public/`: For static assets like textures (e.g., `public/textures/earth_day.jpg`) and the celestial data JSON file (e.g., `public/data/solar_system.json`)
-  - `layouts/`: For defining common page layouts, if needed (e.g., a default layout with a header/footer)
-  - `assets/`: For global styles or other assets processed by the build tool (though `public/` is better for direct-access items like textures)
-- **Routing:** Nuxt's file-system based routing will automatically create routes from the `.vue` files in the `pages/` directory
-- **Vue 3 Composition API with `<script setup>`:** This will be the standard for all Vue components, including the one hosting the Three.js canvas
-- **Three.js Integration:**
-  - A specific Vue component (e.g., `components/SolarSystemCanvas.vue` or directly within `pages/celestial-walker.vue`) will be responsible for initializing and managing the Three.js scene
-  - The Three.js renderer will attach to a `<canvas>` element in this component's template
-  - Lifecycle hooks (`onMounted`, `onUnmounted`) will be critical for setting up and tearing down the Three.js scene to prevent memory leaks
-- **Data Fetching:** The static JSON file for celestial bodies can be fetched using Nuxt's `$fetch` utility or the browser's `fetch` API within a composable
-
-**3. External Systems:**
-
-- None identified beyond the user's browser rendering the web application. We are not integrating with external APIs for data at this stage.
-
-**4. System Boundaries and Responsibilities:**
-
-- **Nuxt.js/Vue:**
-  - Overall application structure, routing, and page rendering
-  - UI elements outside the Three.js canvas (e.g., navigation buttons on the home page, the floating information card for celestial bodies)
-  - Managing application state (e.g., which object is selected)
-  - Handling user input that affects the broader UI (e.g., closing an info card)
-- **Three.js (managed via composables):**
-  - Rendering the 3D scene (stars, sun, planets, moons, rings, orbit trails)
-  - Managing the camera, lighting, and post-processing effects (bloom for the Sun)
-  - Handling 3D interactions (raycasting for hover/click detection on celestial bodies)
-  - Implementing animations (celestial orbits, camera movements)
-  - Loading and applying textures and materials to 3D objects
-  - Calculating dynamic orbit trail thickness
-
-**5. High-Level System Context Diagram (Conceptual):**
+### Directory Structure
 
 ```
-[User's Browser]
-       |
-       V
-[Nuxt.js Application]
-  |-- [Routing Engine] -> Manages page navigation
-  |
-  |-- [Home Page (`/`)] -> Vue Component with navigation buttons
-  |     |-- Button -> `/shop-list`
-  |     |-- Button -> `/showcase`
-  |     |-- Button -> `/celestial-walker`
-  |
-  |-- [Shop-List Page (`/shop-list`)] -> Simple Vue Component (Placeholder)
-  |
-  |-- [Showcase Page (`/showcase`)] -> Simple Vue Component (Placeholder)
-  |
-  |-- [Celestial Walker Page (`/celestial-walker`)] -> Vue Component
-  |     |-- [Three.js Canvas Element (`<canvas>`)]
-  |     |-- [Floating Info Card UI Component (Vue)]
-  |     |
-  |     |-- [Composables (Logic Layer)]
-  |          |-- `useSolarSystemData.ts` (Fetches and provides data from `solar_system.json`)
-  |          |-- `useThreeScene.ts` (Initializes scene, camera, renderer, lights, stars)
-  |          |-- `useCelestialBody.ts` (Creates/manages planets, moons, sun, rings, orbits)
-  |          |-- `useInteraction.ts` (Handles hover, click, camera controls)
-  |          |-- `usePostProcessing.ts` (Manages bloom effect for the Sun)
-  |
-  |-- [Static Assets (`public/`)]
-        |-- `data/solar_system.json`
-        |-- `textures/sun.jpg`, `textures/earth_day.jpg`, etc.
+composables/
+├── core/                          # Fundamental 3JS components
+│   ├── useAnimationLoop.ts        # Render loop and orbital animations
+│   ├── usePostProcessing.ts       # Visual effects (bloom, outline)
+│   └── useThreeCore.ts            # Basic 3JS setup (scene, camera, renderer)
+├── data/                          # Data fetching and management
+│   └── useSolarSystemData.ts      # Solar system data loading
+├── factories/                     # Object creation patterns
+│   ├── useCelestialBodyFactory.ts # Planet/star creation
+│   └── useOrbitFactory.ts         # Orbital mechanics and visualization
+├── features/                      # Specific application features
+│   ├── useCameraManager.ts        # Camera movements and controls
+│   ├── useInteractionManager.ts   # Mouse/keyboard interactions
+│   ├── useSceneLoader.ts          # Scene initialization and loading
+│   ├── useStarfield.ts            # Background star generation
+│   ├── useTacticalView.ts         # Top-down view mode
+│   ├── useVisualisation.ts        # Debug visualization tools
+│   └── useZoomManager.ts          # Zoom level management
+├── state/                         # Reactive state management
+│   ├── cameraState.ts             # Camera position and distance
+│   ├── effectsState.ts            # Post-processing effects state
+│   ├── interactionState.ts        # User interaction state
+│   └── visualisationState.ts      # Debug visualization state
+└── useSceneOrchestrator.ts        # Main orchestrator (legacy, being phased out)
 ```
 
+## Core Composables
+
+### useThreeCore.ts
+
+**Purpose**: Initializes fundamental 3JS components (scene, camera, renderer, controls).
+
+**Key Features**:
+
+- Creates WebGL renderer with optimal settings
+- Sets up PerspectiveCamera with configurable parameters
+- Initializes OrbitControls for user interaction
+- Provides cleanup and resize handling methods
+
+**Dependencies**: None (base level)
+
+**Usage**:
+
+```typescript
+const threeCore = useThreeCore(canvasElement)
+const { scene, camera, renderer, controls, cleanup, onResize } = threeCore
+```
+
+**Integration**: Used by all other composables that need access to core 3JS objects.
+
+### usePostProcessing.ts
+
+**Purpose**: Sets up visual effects pipeline including bloom and outline effects.
+
+**Key Features**:
+
+- EffectComposer for post-processing pipeline
+- UnrealBloomPass for glow effects
+- OutlinePass for object selection highlighting
+- Dynamic outline color management
+
+**Dependencies**:
+
+- `useThreeCore` (requires scene, camera, renderer)
+- `effectsState` (outline objects and colors)
+
+**Usage**:
+
+```typescript
+const { composer } = usePostProcessing(threeCore)
+```
+
+### useAnimationLoop.ts
+
+**Purpose**: Manages the main render loop and orbital animations.
+
+**Key Features**:
+
+- Handles orbital mechanics calculations
+- Updates camera following behavior
+- Manages zoom level calculations
+- Coordinates with all animated objects
+
+**Dependencies**:
+
+- `useThreeCore`
+- `useCameraManager`
+- `useSolarSystemData`
+- `useZoomManager`
+- Multiple state files
+
+**Usage**:
+
+```typescript
+const { start, stop } = useAnimationLoop(threeCore, composer, cameraManager)
+start() // Begin animation loop
+```
+
+## Data Management
+
+### useSolarSystemData.ts
+
+**Purpose**: Fetches and manages solar system data from JSON files.
+
+**Key Features**:
+
+- Singleton pattern for shared data access
+- Async data loading with error handling
+- Reactive state management
+- Type-safe data parsing
+
+**Dependencies**: None
+
+**Usage**:
+
+```typescript
+const { data, loading, error, loadData } = useSolarSystemData()
+await loadData()
+```
+
+**Data Structure**: Provides access to sun, planets, moons, and their properties (physical, orbital, textures).
+
+## Factories
+
+### useCelestialBodyFactory.ts
+
+**Purpose**: Creates 3JS meshes for celestial bodies (planets, stars, moons).
+
+**Key Features**:
+
+- Singleton pattern to prevent memory leaks
+- Texture loading and material creation
+- Geometry scaling based on real astronomical data
+- Proper resource disposal
+
+**Dependencies**:
+
+- Configuration files (colors, scaling)
+
+**Usage**:
+
+```typescript
+const { createSun, createPlanet, cleanup } = useCelestialBodyFactory()
+const sunMesh = await createSun(sunData)
+const planetMesh = await createPlanet(planetData)
+```
+
+### useOrbitFactory.ts
+
+**Purpose**: Creates orbital mechanics and visual orbit paths.
+
+**Key Features**:
+
+- Orbital pivot creation with proper scaling
+- Visual orbit line generation
+- Orbital parameter calculations
+- Resource management for cleanup
+
+**Dependencies**:
+
+- Configuration files (scaling, colors)
+
+**Usage**:
+
+```typescript
+const { createOrbit, createOrbitLine, cleanupLines } = useOrbitFactory()
+const orbit = createOrbit(distanceKm, centralBodyRadius, speed, name)
+const orbitLine = createOrbitLine(radius)
+```
+
+## Features
+
+### useCameraManager.ts
+
+**Purpose**: Handles all camera movements, animations, and behaviors.
+
+**Key Features**:
+
+- Smooth camera focusing on celestial bodies
+- Camera following behavior
+- Tactical view (top-down) mode
+- GSAP-powered smooth animations
+
+**Dependencies**:
+
+- GSAP for animations
+- State management files
+- Scene configuration
+
+**Usage**:
+
+```typescript
+const cameraManager = useCameraManager(camera, controls)
+cameraManager.focusOnBody(celestialBody)
+cameraManager.toggleTacticalView()
+```
+
+### useInteractionManager.ts
+
+**Purpose**: Manages user interactions (mouse, keyboard) with the scene.
+
+**Key Features**:
+
+- Raycasting for object selection
+- Hover and selection state management
+- Keyboard shortcuts
+- Visual feedback coordination
+
+**Dependencies**:
+
+- State management files
+- 3JS raycasting
+
+**Usage**:
+
+```typescript
+const interactionManager = useInteractionManager(scene, camera, renderer, celestialBodies)
+interactionManager.init()
+```
+
+### useSceneLoader.ts
+
+**Purpose**: Orchestrates the loading and creation of all scene objects.
+
+**Key Features**:
+
+- Data loading coordination
+- Object creation sequencing
+- Registration with debug systems
+- Error handling for loading failures
+
+**Dependencies**:
+
+- Data management
+- Factories
+- Visualization system
+
+**Usage**:
+
+```typescript
+const { load } = useSceneLoader()
+await load(scene)
+```
+
+### useStarfield.ts
+
+**Purpose**: Creates and manages the background starfield.
+
+**Key Features**:
+
+- Procedural star generation
+- Configurable density and distribution
+- Performance-optimized particle system
+- Proper cleanup handling
+
+**Dependencies**: Scene configuration
+
+**Usage**:
+
+```typescript
+const { starfield, cleanup } = useStarfield(scene, options)
+```
+
+### useTacticalView.ts
+
+**Purpose**: Provides global access to tactical view functionality.
+
+**Key Features**:
+
+- Global state management for tactical view
+- Registration system for camera manager
+- Simple API for view toggling
+
+**Dependencies**: Interaction state
+
+**Usage**:
+
+```typescript
+const { isTacticalViewActive, toggleTacticalView } = useTacticalView()
+```
+
+### useVisualisation.ts
+
+**Purpose**: Provides debugging visualization tools (wireframes, helpers, axes).
+
+**Key Features**:
+
+- Individual object visualization controls
+- Global visualization toggles
+- 3JS helper management (AxesHelper, GridHelper)
+- Registration system for objects
+
+**Dependencies**: Visualization state
+
+**Usage**:
+
+```typescript
+const { toggleBodyWireframe, toggleGlobalAxes } = useDebugActions()
+toggleBodyWireframe('earth')
+toggleGlobalAxes()
+```
+
+### useZoomManager.ts
+
+**Purpose**: Manages zoom level calculations and state.
+
+**Key Features**:
+
+- Zoom level calculation (0-10 scale)
+- Reactive zoom state
+- Zoom threshold management
+
+**Dependencies**: None
+
+**Usage**:
+
+```typescript
+const { zoomLevel, setZoomLevel } = useZoomManager()
+setZoomLevel(5)
+```
+
+## State Management
+
+### cameraState.ts
+
+**Purpose**: Reactive state for camera distance and position.
+
+**Exports**:
+
+- `cameraDistance` (readonly)
+- `setCameraDistance(distance: number)`
+
+### effectsState.ts
+
+**Purpose**: State for post-processing effects and object highlighting.
+
+**Exports**:
+
+- `outlinedObjects` - Objects to be outlined
+- `outlineColor` - Current outline color
+- `outlineParams` - Outline effect parameters
+- `HOVER_COLOR`, `SELECT_COLOR` - Predefined colors
+
+### interactionState.ts
+
+**Purpose**: State for user interactions and selected objects.
+
+**Exports**:
+
+- `hoveredBody` - Currently hovered celestial body
+- `selectedBody` - Currently selected celestial body
+- `isCameraFollowing` - Camera following state
+- `isInfoWindowOpen` - Info window visibility
+- `isTacticalViewActive` - Tactical view state
+
+### visualisationState.ts
+
+**Purpose**: State for debug visualization tools and registered objects.
+
+**Exports**:
+
+- `globalWireframe`, `globalAxes`, `globalGrids` - Global toggles
+- `celestialBodies`, `orbits` - Registered objects
+- Computed properties for UI integration
+
+## Scene Orchestrator
+
+### useSceneOrchestrator.ts
+
+**Purpose**: Legacy main orchestrator being phased out in favor of modular architecture.
+
+**Status**: This file contains the old monolithic approach and is being replaced by the smaller, focused composables described above.
+
+## Usage Examples
+
+### Basic Scene Setup
+
+```typescript
+// 1. Initialize core 3JS components
+const threeCore = useThreeCore(canvas)
+
+// 2. Set up post-processing
+const { composer } = usePostProcessing(threeCore)
+
+// 3. Create camera manager
+const cameraManager = useCameraManager(threeCore.camera.value, threeCore.controls.value)
+
+// 4. Set up interactions
+const interactionManager = useInteractionManager(
+  threeCore.scene.value,
+  threeCore.camera.value,
+  threeCore.renderer.value,
+  celestialBodies
+)
+
+// 5. Load scene data and objects
+const { load } = useSceneLoader()
+await load(threeCore.scene.value)
+
+// 6. Start animation loop
+const { start } = useAnimationLoop(threeCore, composer, cameraManager)
+start()
+```
+
+### Adding Debug Visualization
+
+```typescript
+const { toggleBodyWireframe, registerCelestialBody } = useDebugActions()
+
+// Register a celestial body for debugging
+registerCelestialBody('earth', 'Earth', 'Third planet from the Sun', earthMesh)
+
+// Toggle wireframe mode
+toggleBodyWireframe('earth')
+```
+
+### Handling User Interactions
+
+```typescript
+// Watch for selected body changes
+watch(selectedBody, (newBody) => {
+  if (newBody) {
+    cameraManager.focusOnBody(newBody)
+  }
+  else {
+    cameraManager.resetCamera()
+  }
+})
+```
+
+## Best Practices
+
+### 1. Dependency Management
+
+- Always use the singleton pattern for resource-heavy composables
+- Import only what you need to avoid circular dependencies
+- Use type imports when possible
+
+### 2. Resource Cleanup
+
+- Always call cleanup methods in `onUnmounted`
+- Dispose of 3JS objects properly
+- Clear animation frames and event listeners
+
+### 3. State Management
+
+- Use readonly refs for state that shouldn't be modified externally
+- Prefer computed properties for derived state
+- Keep state as minimal as possible
+
+### 4. Error Handling
+
+- Wrap async operations in try-catch blocks
+- Provide meaningful error messages
+- Handle edge cases gracefully
+
+### 5. Performance
+
+- Use `shallowRef` for 3JS objects
+- Avoid reactive wrapping of complex objects
+- Implement proper disposal patterns
+
 ---
 
-### Phase 3: Architecture Design
+# Documentation Française
 
-**1. Potential Architecture Patterns:**
+## Vue d'ensemble de l'architecture
 
-Given the requirements (Nuxt app, significant Three.js portion, focus on maintainability and clean architecture principles from your custom instructions), the primary "architecture pattern" will be a **Component-Based Architecture** (inherent in Vue/Nuxt) augmented with a **Composable-Based Service Layer** for the Three.js and data logic.
+Le répertoire composables suit une architecture modulaire et propre basée sur le principe de responsabilité unique. Chaque composable gère un aspect spécifique de l'application de visualisation du système solaire avec 3JS.
 
-- **Pattern 1: Monolithic Component Approach (Less Ideal)**
+### Structure du répertoire
 
-  - **Description:** Place most of the Three.js logic directly within the `pages/celestial-walker.vue` component
-  - **Why appropriate (superficially):** Simple for a small demo
-  - **Advantages:** Quick to start for a single, isolated 3D scene
-  - **Drawbacks:**
-    - Violates single responsibility principle
-    - Hard to test and maintain as complexity grows
-    - Makes code reuse difficult
-    - The `celestial-walker.vue` component would become massive
+```
+composables/
+├── core/                          # Composants 3JS fondamentaux
+│   ├── useAnimationLoop.ts        # Boucle de rendu et animations orbitales
+│   ├── usePostProcessing.ts       # Effets visuels (bloom, contour)
+│   └── useThreeCore.ts            # Configuration 3JS de base
+├── data/                          # Récupération et gestion des données
+│   └── useSolarSystemData.ts      # Chargement des données du système solaire
+├── factories/                     # Patterns de création d'objets
+│   ├── useCelestialBodyFactory.ts # Création de planètes/étoiles
+│   └── useOrbitFactory.ts         # Mécanique orbitale et visualisation
+├── features/                      # Fonctionnalités spécifiques
+│   ├── useCameraManager.ts        # Mouvements et contrôles de caméra
+│   ├── useInteractionManager.ts   # Interactions souris/clavier
+│   ├── useSceneLoader.ts          # Initialisation et chargement de scène
+│   ├── useStarfield.ts            # Génération d'étoiles d'arrière-plan
+│   ├── useTacticalView.ts         # Mode vue de dessus
+│   ├── useVisualisation.ts        # Outils de visualisation debug
+│   └── useZoomManager.ts          # Gestion du niveau de zoom
+├── state/                         # Gestion d'état réactif
+│   ├── cameraState.ts             # Position et distance de caméra
+│   ├── effectsState.ts            # État des effets de post-traitement
+│   ├── interactionState.ts        # État des interactions utilisateur
+│   └── visualisationState.ts      # État de visualisation debug
+└── useSceneOrchestrator.ts        # Orchestrateur principal (legacy)
+```
 
-- **Pattern 2: Component-Based with Composable Service Layer (Recommended)**
+## Composables de base
 
-  - **Description:**
-    - Vue components (`.vue` files in `pages/` and `components/`) handle UI presentation and user interaction dispatch
-    - Composables (`.ts` files in `composables/`) encapsulate specific pieces of logic:
-      - Three.js scene setup and rendering
-      - Creation and management of celestial bodies
-      - Interaction handling (raycasting, camera controls)
-      - Data fetching and management
-      - Post-processing effects
-  - **Why appropriate:**
-    - Aligns perfectly with Vue 3's Composition API and Nuxt 3's structure
-    - Promotes separation of concerns (UI vs. logic)
-    - Enhances testability and maintainability
-    - Follows your custom instructions for clean architecture and Vue.js best practices
-  - **Key Advantages:**
-    - **Modularity:** Logic is broken down into manageable, reusable pieces (composables)
-    - **Testability:** Composables can often be tested in isolation
-    - **Readability:** Components remain lean and focused on templating and UI event handling
-    - **Maintainability:** Easier to debug and update specific parts of the system
-  - **Potential Drawbacks:**
-    - Slightly more boilerplate initially compared to a monolithic approach (creating separate files for composables). This is a minor trade-off for long-term benefits
+### useThreeCore.ts
 
-- **Pattern 3: External 3D Engine Abstraction (Overkill for now)**
-  - **Description:** Create a more generic abstraction layer over Three.js, potentially making it easier to swap out the 3D engine in the future
-  - **Why appropriate (in specific scenarios):** Useful if there's a high likelihood of changing the underlying 3D technology or if building a very large, complex 3D application framework
-  - **Advantages:** Maximum flexibility and decoupling from a specific 3D library
-  - **Drawbacks:**
-    - Significant overhead and complexity for this project's current scope
-    - May obscure Three.js-specific optimizations and features
-    - Not necessary given the direct requirement to use Three.js
+**Objectif** : Initialise les composants 3JS fondamentaux (scène, caméra, renderer, contrôles).
 
-**2. Recommended Architecture Pattern:**
-**Pattern 2: Component-Based with Composable Service Layer** is the clear choice. It aligns with modern Vue/Nuxt development, your custom instructions, and the project's needs for a maintainable and organized codebase, especially for the complex `/celestial-walker` feature.
+**Fonctionnalités clés** :
 
-**3. Core Components and Composables (Initial Draft):**
+- Crée un renderer WebGL avec des paramètres optimaux
+- Configure une PerspectiveCamera avec des paramètres configurables
+- Initialise OrbitControls pour l'interaction utilisateur
+- Fournit des méthodes de nettoyage et de redimensionnement
 
-- **Nuxt Pages (`pages/`):**
+**Dépendances** : Aucune (niveau de base)
 
-  - `index.vue`: Home page with navigation buttons to sub-sections
-  - `shop-list.vue`: Placeholder for the shopping list app
-  - `showcase.vue`: Placeholder for the 3D artworks showcase
-  - `celestial-walker.vue`:
-    - Hosts the Three.js `<canvas>` element
-    - Integrates various composables for the solar system functionality
-    - Manages the layout including the floating info card
+**Utilisation** :
 
-- **Vue Components (`components/`):**
+```typescript
+const threeCore = useThreeCore(canvasElement)
+const { scene, camera, renderer, controls, cleanup, onResize } = threeCore
+```
 
-  - `CelestialBodyInfoCard.vue`: Displays information about a selected celestial body
-    - Props: `bodyData` (object), `isVisible` (boolean)
-    - Emits: `close`
-  - `NavigationButton.vue`: (Optional) A reusable button component for the home page
+**Intégration** : Utilisé par tous les autres composables nécessitant l'accès aux objets 3JS de base.
 
-- **Composables (`composables/`):**
-  - `useSolarSystemData.ts`:
-    - Responsibility: Fetches celestial body data from `public/data/solar_system.json`. Provides reactive access to this data
-    - Exports: `function getCelestialData(): Promise<SolarSystemDataInterface>`
-  - `useThreeSceneManager.ts`:
-    - Responsibility: Initializes and manages the core Three.js scene, camera, renderer, lights. Handles window resizing. Manages the main render loop
-    - Needs: Reference to the `<canvas>` element
-    - Exports: `function createScene(canvas: Ref<HTMLCanvasElement | undefined>): { scene: Scene, camera: PerspectiveCamera, renderer: WebGLRenderer, startRenderLoop: (onTick: () => void) => void, stopRenderLoop: () => void, setCameraPosition: (pos: Vector3) => void, lookAt: (target: Vector3) => void }`
-  - `useStarfield.ts`:
-    - Responsibility: Creates and adds the starfield particle system to the scene
-    - Needs: `Scene` object
-    - Exports: `function createStarfield(scene: Scene, count: number, radius: number): Points`
-  - `useCelestialBodyFactory.ts`:
-    - Responsibility: A factory to create and manage individual celestial bodies (Sun, planets, moons), including their meshes, materials (textures, multi-textures for Earth), rings, and orbit trail objects. Handles orbital mechanics (position updates per frame)
-    - Needs: `Scene` object, celestial body data from `useSolarSystemData`
-    - Exports: `function createCelestialBody(scene: Scene, bodyData: CelestialBodyDataInterface, isSun?: boolean): { threeObject: Object3D, updateOrbit: (time: number) => void, orbitTrail: Line, highlight: (color: Color) => void, unhighlight: () => void }`
-    - (This might be broken down further if it becomes too large, e.g., `usePlanet.ts`, `useMoon.ts`, `useSun.ts`, `useRings.ts`, `useOrbitTrail.ts`)
-  - `useInteractionManager.ts`:
-    - Responsibility: Manages user interactions:
-      - Camera controls (e.g., using `OrbitControls` from Three.js)
-      - Raycasting for hover and click detection on celestial bodies
-      - Managing hover effects (calling highlight methods on celestial bodies)
-      - Managing click effects (camera animation, emitting event to show info card)
-    - Needs: `Camera`, `Scene`, list of interactable `Object3D`s, DOM element for event listeners
-    - Exports: `function setupInteractions(camera: PerspectiveCamera, rendererDomElement: HTMLElement, scene: Scene, interactableObjects: Ref<Object3D[]>, onObjectHover: (object: Object3D | null) => void, onObjectClick: (object: Object3D) => void): { controls: OrbitControls, dispose: () => void }`
-  - `usePostProcessing.ts`:
-    - Responsibility: Sets up and manages post-processing effects, specifically the bloom effect for the Sun
-    - Needs: `Scene`, `Camera`, `Renderer`
-    - Exports: `function createBloomEffect(scene: Scene, camera: PerspectiveCamera, renderer: WebGLRenderer, sunObject: Object3D): { composer: EffectComposer, update: () => void }`
-  - `useCameraAnimator.ts`:
-    - Responsibility: Handles camera animations, e.g., smoothly moving the camera to focus on a clicked celestial body
-    - Needs: `Camera`
-    - Exports: `function animateCameraToTarget(camera: PerspectiveCamera, targetPosition: Vector3, targetLookAt: Vector3, duration?: number): Promise<void>`
+### usePostProcessing.ts
 
----
+**Objectif** : Configure le pipeline d'effets visuels incluant les effets de bloom et de contour.
 
-### Phase 4: Technical Specification
+**Fonctionnalités clés** :
 
-**1. Recommended Technologies:**
+- EffectComposer pour le pipeline de post-traitement
+- UnrealBloomPass pour les effets de lueur
+- OutlinePass pour la mise en surbrillance de sélection d'objets
+- Gestion dynamique des couleurs de contour
 
-- **Framework:** Nuxt 3 (Vue 3) - As specified
-- **Language:** TypeScript (strict mode) - As specified
-- **Package Manager:** PNPM - As specified
-- **3D Library:** Three.js - As specified
-- **UI Styling:**
-  - Option 1: Standard CSS/SCSS within Vue components
-  - Option 2: Tailwind CSS (if you prefer utility-first CSS). Nuxt has a module for Tailwind (`@nuxtjs/tailwindcss`)
-  - _Recommendation:_ Start with standard CSS/SCSS scoped to components. It's simpler for the current scale. If styling needs become complex, Tailwind can be added later
-- **State Management (Simple):** Vue's `ref`, `reactive`, and `provide`/`inject` for local component state and simple cross-component communication (e.g., selected object for the info card). For the solar system data, a reactive ref holding the fetched JSON will be sufficient
-- **Linting/Formatting:** ESLint (already set up with `eslint.config.mjs`) and Prettier. I recommend adding Prettier and configuring it to work with ESLint
-- **Data Format:** JSON for `solar_system.json`
+**Dépendances** :
 
-**2. Implementation Phases & Dependencies:**
+- `useThreeCore` (nécessite scene, camera, renderer)
+- `effectsState` (objets et couleurs de contour)
 
-- **Phase 0: Project Setup & Basic Pages**
+**Utilisation** :
 
-  - Task 1: Create directories: `pages`, `components`, `composables`, `public/data`, `public/textures`
-  - Task 2: Implement basic placeholder pages:
-    - `pages/index.vue` (with navigation buttons)
-    - `pages/shop-list.vue` (with `<h1>Shopping List</h1><h2>Work in progress</h2>`)
-    - `pages/showcase.vue` (with `<h1>3D Artworks Showcase</h1><h2>Work in progress</h2>`)
-  - Task 3: Implement `pages/celestial-walker.vue` (initially just a title and a placeholder for the canvas)
-  - Task 4: Setup basic routing (Nuxt handles this automatically based on `pages/`)
-  - Task 5: Create `public/data/solar_system.json` with a minimal structure (e.g., just the Sun and Earth with basic properties) for initial testing
-  - Task 6: Add a couple of placeholder texture images to `public/textures/`
-  - _Dependencies:_ None. This is the foundational phase
+```typescript
+const { composer } = usePostProcessing(threeCore)
+```
 
-- **Phase 1: Core Three.js Scene Setup (`/celestial-walker`)**
+### useAnimationLoop.ts
 
-  - Task 1.1: Implement `useThreeSceneManager.ts`:
-    - Initialize `Scene`, `PerspectiveCamera`, `WebGLRenderer`
-    - Append renderer's DOM element to a `div` in `celestial-walker.vue`
-    - Add basic ambient light and a point light (for the Sun initially)
-    - Implement the render loop
-    - Handle window resize
-  - Task 1.2: Integrate `useThreeSceneManager` into `celestial-walker.vue`
-  - Task 1.3: Implement `useStarfield.ts` to create a basic starfield and add it via `celestial-walker.vue`
-  - _Dependencies:_ Phase 0
+**Objectif** : Gère la boucle de rendu principale et les animations orbitales.
 
-- **Phase 2: Data Loading & Basic Celestial Bodies (`/celestial-walker`)**
+**Fonctionnalités clés** :
 
-  - Task 2.1: Define TypeScript interfaces for the `solar_system.json` structure (e.g., `SolarSystemData`, `PlanetData`, `MoonData`, `OrbitParams`, etc.) in a `types/solar-system.types.ts` file
-  - Task 2.2: Implement `useSolarSystemData.ts` to fetch and parse `solar_system.json`
-  - Task 2.3: Implement a basic version of `useCelestialBodyFactory.ts`:
-    - Focus on creating the Sun (as a simple sphere with basic material) and Earth (sphere with basic material)
-    - Implement simple circular orbit logic (ignoring full Keplerian elements for now, just radius and speed)
-    - Load and apply basic textures
-  - Task 2.4: In `celestial-walker.vue`, use `useSolarSystemData` to get data and `useCelestialBodyFactory` to create and add the Sun and Earth to the scene
-  - _Dependencies:_ Phase 1. User-provided `solar_system.json` (at least partial) and textures
+- Gère les calculs de mécanique orbitale
+- Met à jour le comportement de suivi de caméra
+- Gère les calculs de niveau de zoom
+- Coordonne avec tous les objets animés
 
-- **Phase 3: Advanced Celestial Bodies & Orbit Trails (`/celestial-walker`)**
+**Dépendances** :
 
-  - Task 3.1: Enhance `useCelestialBodyFactory.ts`:
-    - Implement creation of all planet types and dwarf planets
-    - Implement multi-texture loading and material setup for Earth (day, specular, normal maps). Night map can be added if a dynamic day/night cycle is implemented later (out of scope for initial realistic orbit)
-    - Implement ring creation for Saturn, Uranus (and faint rings for Jupiter, Neptune)
-    - Implement moon creation and attach them to their parent planets
-    - Implement accurate orbital mechanics based on provided Keplerian elements from `solar_system.json`
-  - Task 3.2: Implement `useOrbitTrail.ts` (or integrate into `useCelestialBodyFactory.ts`):
-    - Generate and display orbit trails (simple lines with 0.5 opacity)
-  - _Dependencies:_ Phase 2. Complete `solar_system.json` data and all required textures
+- `useThreeCore`
+- `useCameraManager`
+- `useSolarSystemData`
+- `useZoomManager`
+- Multiples fichiers d'état
 
-- **Phase 4: Interactivity (`/celestial-walker`)**
+**Utilisation** :
 
-  - Task 4.1: Implement `useInteractionManager.ts`:
-    - Add `OrbitControls` for camera manipulation
-    - Implement raycasting for hover and click
-  - Task 4.2: Implement hover effect:
-    - `useCelestialBodyFactory`'s objects should have `highlight(color)` and `unhighlight()` methods
-    - `useInteractionManager` calls these on hover. The highlight color will be provided by the user (can be part of the JSON data or a constant)
-    - Orbit trails should also be highlighted
-  - Task 4.3: Implement click effect:
-    - Implement `useCameraAnimator.ts` for smooth camera transitions
-    - Create `components/CelestialBodyInfoCard.vue`
-    - On click, `useInteractionManager` triggers camera animation (via `useCameraAnimator`) and emits an event to `celestial-walker.vue` with the clicked object's data
-    - `celestial-walker.vue` shows and populates `CelestialBodyInfoCard.vue`
-  - Task 4.4: Dynamic orbit trail thickness in `useOrbitTrail.ts` (or `useCelestialBodyFactory.ts`):
-    - Adjust line material thickness based on camera distance to the solar system's center or average planet distance
-  - _Dependencies:_ Phase 3
+```typescript
+const { start, stop } = useAnimationLoop(threeCore, composer, cameraManager)
+start() // Commence la boucle d'animation
+```
 
-- **Phase 5: Post-Processing & Refinements (`/celestial-walker`)**
-  - Task 5.1: Implement `usePostProcessing.ts` for the Sun's bloom effect
-    - Use `EffectComposer` and `UnrealBloomPass` from Three.js
-    - Configure it to only affect the Sun (e.g., using layers or by rendering Sun to a separate render target for bloom)
-  - Task 5.2: General performance optimizations (texture compression, geometry optimization if needed, draw call reduction)
-  - Task 5.3: Code cleanup, documentation (JSDoc), final review against custom instructions
-  - _Dependencies:_ Phase 4
+## Gestion des données
 
-**3. Technical Risks and Mitigation Strategies:**
+### useSolarSystemData.ts
 
-- **Risk 1: Performance issues with many objects, textures, and effects**
+**Objectif** : Récupère et gère les données du système solaire depuis des fichiers JSON.
 
-  - **Mitigation:**
-    - Use Three.js performance best practices: instancing (if applicable, though celestial bodies are unique), texture atlases (if many small textures), LOD (Level of Detail - probably overkill for this), frustum culling (default in Three.js)
-    - Optimize texture sizes and use compressed formats (e.g., KTX2 with Basis Universal, though this adds complexity; start with JPG/PNG)
-    - Profile using browser dev tools and `Stats.js`
-    - Implement dynamic orbit trail thickness carefully to avoid performance hit during camera zoom
-    - For stars, ensure particle system is efficient
+**Fonctionnalités clés** :
 
-- **Risk 2: Complexity of accurate orbital mechanics**
+- Pattern singleton pour l'accès partagé aux données
+- Chargement de données asynchrone avec gestion d'erreurs
+- Gestion d'état réactif
+- Analyse de données type-safe
 
-  - **Mitigation:**
-    - User provides all orbital parameters. The key is to correctly implement the math to convert Keplerian elements (or simplified parameters) to Cartesian coordinates over time
-    - Start with simplified circular orbits, then iterate to full Keplerian if necessary and if data provides it. Often, for visualization, mean anomalies and periods are enough to give a good representation without full n-body simulation
-    - Refer to reliable astronomical formulas and Three.js examples
+**Dépendances** : Aucune
 
-- **Risk 3: Managing Three.js object lifecycles and preventing memory leaks**
+**Utilisation** :
 
-  - **Mitigation:**
-    - Diligently use `dispose()` methods on geometries, materials, and textures when objects are removed or the scene is torn down (e.g., in Vue's `onUnmounted` hook)
-    - Composables that create Three.js objects should also provide cleanup functions
+```typescript
+const { data, loading, error, loadData } = useSolarSystemData()
+await loadData()
+```
 
-- **Risk 4: Achieving the specific Sun bloom effect (affecting only the Sun)**
+**Structure de données** : Fournit l'accès au soleil, aux planètes, aux lunes et leurs propriétés (physiques, orbitales, textures).
 
-  - **Mitigation:**
-    - Use Three.js layers: Assign the Sun to a specific layer, and configure the bloom pass to only render that layer
-    - Alternatively, render the Sun to an offscreen render target, apply bloom to that target, then composite it back. Layers are often simpler
+## Factories {#factories-fr}
 
-- **Risk 5: Cross-browser/device compatibility of WebGL features**
-  - **Mitigation:**
-    - Stick to widely supported WebGL1/WebGL2 features. Three.js handles many abstractions
-    - Test on target browsers (Chrome, Firefox, Safari, Edge)
-    - Provide fallbacks or graceful degradation if very advanced features are used (not planned for now)
+### useCelestialBodyFactory.ts
 
-**4. Technical Success Criteria:**
+**Objectif** : Crée des maillages 3JS pour les corps célestes (planètes, étoiles, lunes).
 
-- All specified pages (`/`, `/shop-list`, `/showcase`, `/celestial-walker`) are implemented and accessible
-- `/celestial-walker` loads and displays the solar system based on `solar_system.json`
-- All specified celestial bodies (Sun, planets with multi-textures/rings, dwarf planets, moons) are rendered with their textures and orbit trails
-- Orbits are animated, reflecting realistic (or user-provided simplified) mechanics
-- User can control the camera (pan, zoom, rotate)
-- Hovering over a celestial body highlights it and its trail
-- Clicking a celestial body animates the camera to it and displays an info card
-- Sun has a bloom effect that does not affect other objects
-- Orbit trail thickness is dynamic with zoom
-- Application maintains smooth performance (e.g., >30 FPS, ideally 60 FPS) on target desktop browsers
-- Code adheres to the custom instructions (TypeScript, PNPM, Vue Composition API, composable structure, JSDoc, etc.)
-- No console errors during normal operation
-- Proper disposal of Three.js resources on page navigation or component unmount
+**Fonctionnalités clés** :
 
-**5. Final Confidence Level:** 95%
+- Pattern singleton pour prévenir les fuites mémoire
+- Chargement de textures et création de matériaux
+- Mise à l'échelle de géométrie basée sur des données astronomiques réelles
+- Disposal approprié des ressources
 
----
+**Dépendances** :
+
+- Fichiers de configuration (couleurs, mise à l'échelle)
+
+**Utilisation** :
+
+```typescript
+const { createSun, createPlanet, cleanup } = useCelestialBodyFactory()
+const sunMesh = await createSun(sunData)
+const planetMesh = await createPlanet(planetData)
+```
+
+### useOrbitFactory.ts
+
+**Objectif** : Crée la mécanique orbitale et les chemins d'orbite visuels.
+
+**Fonctionnalités clés** :
+
+- Création de pivot orbital avec mise à l'échelle appropriée
+- Génération de lignes d'orbite visuelles
+- Calculs de paramètres orbitaux
+- Gestion des ressources pour le nettoyage
+
+**Dépendances** :
+
+- Fichiers de configuration (mise à l'échelle, couleurs)
+
+**Utilisation** :
+
+```typescript
+const { createOrbit, createOrbitLine, cleanupLines } = useOrbitFactory()
+const orbit = createOrbit(distanceKm, centralBodyRadius, speed, name)
+const orbitLine = createOrbitLine(radius)
+```
+
+## Fonctionnalités
+
+### useCameraManager.ts
+
+**Objectif** : Gère tous les mouvements, animations et comportements de caméra.
+
+**Fonctionnalités clés** :
+
+- Focalisation fluide de caméra sur les corps célestes
+- Comportement de suivi de caméra
+- Mode vue tactique (vue de dessus)
+- Animations fluides propulsées par GSAP
+
+**Dépendances** :
+
+- GSAP pour les animations
+- Fichiers de gestion d'état
+- Configuration de scène
+
+**Utilisation** :
+
+```typescript
+const cameraManager = useCameraManager(camera, controls)
+cameraManager.focusOnBody(celestialBody)
+cameraManager.toggleTacticalView()
+```
+
+### useInteractionManager.ts
+
+**Objectif** : Gère les interactions utilisateur (souris, clavier) avec la scène.
+
+**Fonctionnalités clés** :
+
+- Raycasting pour la sélection d'objets
+- Gestion d'état de survol et sélection
+- Raccourcis clavier
+- Coordination de feedback visuel
+
+**Dépendances** :
+
+- Fichiers de gestion d'état
+- Raycasting 3JS
+
+**Utilisation** :
+
+```typescript
+const interactionManager = useInteractionManager(scene, camera, renderer, celestialBodies)
+interactionManager.init()
+```
+
+### useSceneLoader.ts
+
+**Objectif** : Orchestre le chargement et la création de tous les objets de scène.
+
+**Fonctionnalités clés** :
+
+- Coordination du chargement de données
+- Séquençage de création d'objets
+- Enregistrement avec les systèmes de debug
+- Gestion d'erreurs pour les échecs de chargement
+
+**Dépendances** :
+
+- Gestion de données
+- Factories
+- Système de visualisation
+
+**Utilisation** :
+
+```typescript
+const { load } = useSceneLoader()
+await load(scene)
+```
+
+### useStarfield.ts
+
+**Objectif** : Crée et gère le champ d'étoiles d'arrière-plan.
+
+**Fonctionnalités clés** :
+
+- Génération procédurale d'étoiles
+- Densité et distribution configurables
+- Système de particules optimisé pour les performances
+- Gestion appropriée du nettoyage
+
+**Dépendances** : Configuration de scène
+
+**Utilisation** :
+
+```typescript
+const { starfield, cleanup } = useStarfield(scene, options)
+```
+
+### useTacticalView.ts
+
+**Objectif** : Fournit un accès global à la fonctionnalité de vue tactique.
+
+**Fonctionnalités clés** :
+
+- Gestion d'état global pour la vue tactique
+- Système d'enregistrement pour le gestionnaire de caméra
+- API simple pour basculer la vue
+
+**Dépendances** : État d'interaction
+
+**Utilisation** :
+
+```typescript
+const { isTacticalViewActive, toggleTacticalView } = useTacticalView()
+```
+
+### useVisualisation.ts
+
+**Objectif** : Fournit des outils de visualisation de débogage (wireframes, helpers, axes).
+
+**Fonctionnalités clés** :
+
+- Contrôles de visualisation d'objets individuels
+- Bascules de visualisation globales
+- Gestion des helpers 3JS (AxesHelper, GridHelper)
+- Système d'enregistrement pour les objets
+
+**Dépendances** : État de visualisation
+
+**Utilisation** :
+
+```typescript
+const { toggleBodyWireframe, toggleGlobalAxes } = useDebugActions()
+toggleBodyWireframe('earth')
+toggleGlobalAxes()
+```
+
+### useZoomManager.ts
+
+**Objectif** : Gère les calculs et l'état du niveau de zoom.
+
+**Fonctionnalités clés** :
+
+- Calcul du niveau de zoom (échelle 0-10)
+- État de zoom réactif
+- Gestion des seuils de zoom
+
+**Dépendances** : Aucune
+
+**Utilisation** :
+
+```typescript
+const { zoomLevel, setZoomLevel } = useZoomManager()
+setZoomLevel(5)
+```
+
+## Gestion d'état
+
+### cameraState.ts
+
+**Objectif** : État réactif pour la distance et position de caméra.
+
+**Exports** :
+
+- `cameraDistance` (lecture seule)
+- `setCameraDistance(distance: number)`
+
+### effectsState.ts
+
+**Objectif** : État pour les effets de post-traitement et la mise en surbrillance d'objets.
+
+**Exports** :
+
+- `outlinedObjects` - Objets à contourner
+- `outlineColor` - Couleur de contour actuelle
+- `outlineParams` - Paramètres d'effet de contour
+- `HOVER_COLOR`, `SELECT_COLOR` - Couleurs prédéfinies
+
+### interactionState.ts
+
+**Objectif** : État pour les interactions utilisateur et objets sélectionnés.
+
+**Exports** :
+
+- `hoveredBody` - Corps céleste actuellement survolé
+- `selectedBody` - Corps céleste actuellement sélectionné
+- `isCameraFollowing` - État de suivi de caméra
+- `isInfoWindowOpen` - Visibilité de la fenêtre d'info
+- `isTacticalViewActive` - État de vue tactique
+
+### visualisationState.ts
+
+**Objectif** : État pour les outils de visualisation debug et objets enregistrés.
+
+**Exports** :
+
+- `globalWireframe`, `globalAxes`, `globalGrids` - Bascules globales
+- `celestialBodies`, `orbits` - Objets enregistrés
+- Propriétés calculées pour l'intégration UI
+
+## Orchestrateur de scène
+
+### useSceneOrchestrator.ts
+
+**Objectif** : Orchestrateur principal legacy en cours d'élimination progressive en faveur de l'architecture modulaire.
+
+**Statut** : Ce fichier contient l'ancienne approche monolithique et est remplacé par les composables plus petits et focalisés décrits ci-dessus.
+
+## Exemples d'utilisation
+
+### Configuration de scène de base
+
+```typescript
+// 1. Initialiser les composants 3JS de base
+const threeCore = useThreeCore(canvas)
+
+// 2. Configurer le post-traitement
+const { composer } = usePostProcessing(threeCore)
+
+// 3. Créer le gestionnaire de caméra
+const cameraManager = useCameraManager(threeCore.camera.value, threeCore.controls.value)
+
+// 4. Configurer les interactions
+const interactionManager = useInteractionManager(
+  threeCore.scene.value,
+  threeCore.camera.value,
+  threeCore.renderer.value,
+  celestialBodies
+)
+
+// 5. Charger les données et objets de scène
+const { load } = useSceneLoader()
+await load(threeCore.scene.value)
+
+// 6. Démarrer la boucle d'animation
+const { start } = useAnimationLoop(threeCore, composer, cameraManager)
+start()
+```
+
+### Ajout de visualisation de debug
+
+```typescript
+const { toggleBodyWireframe, registerCelestialBody } = useDebugActions()
+
+// Enregistrer un corps céleste pour le debug
+registerCelestialBody('earth', 'Terre', 'Troisième planète du Soleil', earthMesh)
+
+// Basculer le mode wireframe
+toggleBodyWireframe('earth')
+```
+
+### Gestion des interactions utilisateur
+
+```typescript
+// Observer les changements de corps sélectionné
+watch(selectedBody, (newBody) => {
+  if (newBody) {
+    cameraManager.focusOnBody(newBody)
+  }
+  else {
+    cameraManager.resetCamera()
+  }
+})
+```
+
+## Bonnes pratiques
+
+### 1. Gestion des dépendances
+
+- Toujours utiliser le pattern singleton pour les composables lourds en ressources
+- Importer seulement ce dont vous avez besoin pour éviter les dépendances circulaires
+- Utiliser les imports de types quand possible
+
+### 2. Nettoyage des ressources
+
+- Toujours appeler les méthodes de nettoyage dans `onUnmounted`
+- Disposer de manière appropriées objets 3JS
+- Effacer les frames d'animation et event listeners
+
+### 3. Gestion d'état
+
+- Utiliser des refs readonly pour un état qui ne devrait pas être modifié à l'extérieur
+- Préférer les propriétés calculées pour l'état dérivé
+- Garder l'état aussi minimal que possible
+
+### 4. Gestion d'erreurs
+
+- Envelopper les opérations asynchrones dans des blocs try-catch
+- Fournir des messages d'erreur significatifs
+- Gérer les cas limites avec grâce
+
+### 5. Performance
+
+- Utiliser `shallowRef` pour les objets 3JS
+- Éviter l'encapsulation réactive d'objets complexes
+- Implémenter des patterns de disposal appropriés

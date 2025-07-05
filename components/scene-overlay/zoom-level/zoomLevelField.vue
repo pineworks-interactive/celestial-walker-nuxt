@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import ZoomLevelBars from '@/components/scene-overlay/zoom-level/ZoomLevelBars.vue'
-import { useCamera } from '@/composables/useCamera'
-import { useZoomManager } from '@/composables/useZoomManager'
+import { useZoomManager } from '@/composables/features/useZoomManager'
+import { cameraDistance } from '@/composables/state/cameraState'
 import { colors } from '@/configs/colors.config'
 import { controlsConfig } from '@/configs/scene.config'
-import { maxZoomLevel, minZoomLevel, zoomThresholds } from '@/configs/zoom.config'
+import { zoomThresholds } from '@/configs/zoom.config'
 
 const { zoomLevel } = useZoomManager()
-const { cameraDistance } = useCamera()
 
 const maxZoomInThreshold = zoomThresholds[0] // ? 350
 const maxZoomOutThreshold = zoomThresholds[zoomThresholds.length - 1] // ? 4300

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import InfosWindow from '@/components/info-window/InfosWindow.vue'
 import SceneOverlay from '@/components/scene-overlay/SceneOverlaySvg.vue'
-import { useThreeSceneManager } from '@/composables/useThreeSceneManager'
+import { useSceneOrchestrator } from '@/composables/useSceneOrchestrator'
 import { sceneConfig } from '@/configs/scene.config'
 
-useThreeSceneManager(sceneConfig)
+useSceneOrchestrator(sceneConfig)
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { hoveredBody, selectedBody } from '@/composables/interactionState'
+import { hoveredBody, selectedBody } from '~/composables/state/interactionState'
 import { colors } from '@/configs/colors.config'
 
 const targetName = computed(() => selectedBody.value?.name || hoveredBody.value?.name || 'Target')

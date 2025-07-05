@@ -1,56 +1,71 @@
+/**
+ * @module useCameraManager
+ * @description This module provides comprehensive management of the main `PerspectiveCamera`
+ * It handles complex camera movements such as focusing on celestial bodies, entering and exiting a tactical
+ * top-down view, and smoothly following a selected object through the scene. It uses GSAP for robust and
+ * smooth animations.
+ */
 import type { PerspectiveCamera } from 'three'
 import type { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import type { CelestialBodyState } from '@/types/solarSystem.types'
 import { gsap } from 'gsap'
 import { MathUtils, Vector3 } from 'three'
-import { readonly, ref } from 'vue'
-import { outlinedObjects } from '@/composables/effectsState'
-import { isCameraFollowing, isTacticalViewActive } from '@/composables/interactionState'
+import { setCameraDistance } from '@/composables/state/cameraState'
+import { outlinedObjects } from '@/composables/state/effectsState'
+import { isCameraFollowing, isTacticalViewActive, selectedBody } from '@/composables/state/interactionState'
 import { cameraInitialPosition } from '@/configs/scene.config'
 
+// ~ --- Constants ---
+// * A multiplier to calculate the ideal camera distance from a target, ensuring the object doesn't fill the entire screen
 const FOCAL_LENGTH_MULTIPLIER = 1.5
+// * The fixed height (Y-coordinate) for the tactical camera view
 const TACTICAL_VIEW_HEIGHT = 3950
 
+// ~ --- Module-level state ---
+// * Stores the active GSAP animation for focusing, allowing it to be interrupted
 let focusAnimation: gsap.core.Tween | null = null
+// * Stores the active GSAP animation for tactical view transitions, allowing it to be interrupted
 let tacticalAnimation: gsap.core.Tween | null = null
 
-const cameraDistance = ref(0)
-
 /**
- * # Manages camera movements like focusing on objects and resetting the view.
- * @param camera The Three.js PerspectiveCamera instance.
- * @param controls The OrbitControls instance.
+ * # Manages all camera movements and state transitions
+ *
+ * @param {PerspectiveCamera} camera - The main 3JS PerspectiveCamera instance
+ * @param {OrbitControls} controls - The OrbitControls instance, which needs to be updated along with the camera
+ * @returns {object} An object containing methods to control the camera (`focusOnBody`, `resetCamera`, `toggleTacticalView`, etc.)
+ *                   and reactive state properties (`isFollowing`, `isTacticalView`)
  */
 export function useCameraManager(camera: PerspectiveCamera, controls: OrbitControls) {
+  // * Stores the world position of the followed object from the previous frame, used to calculate movement delta
   const lastTargetPosition = new Vector3()
 
-  // ? store camera state before entering tactical view
+  // * Stores the camera's state (position, target) before entering tactical view, so it can be restored upon exit
   const preTacticalCameraState = {
     position: new Vector3(),
     target: new Vector3(),
     wasFollowing: false,
   }
 
-  const updateCameraDistance = () => {
-    cameraDistance.value = camera.position.distanceTo(controls.target)
-  }
-
-  // ? set initial distance
-  updateCameraDistance()
+  // * Set the initial camera distance state
+  setCameraDistance(camera.position.distanceTo(controls.target))
 
   /**
-   * ~ Focus camera on a specific celestial body
+   * ~ Smoothly animates the camera to focus on a specific celestial body
+   *
+   * @param {CelestialBodyState} body - The state object of the celestial body to focus on
    */
   const focusOnBody = (body: CelestialBodyState) => {
     const { mesh } = body
     if (!mesh)
       return
 
+    // * Interrupt any ongoing animations to prevent conflicts
     if (focusAnimation)
       focusAnimation.kill()
     if (tacticalAnimation)
       tacticalAnimation.kill()
 
+    // * Reset state flags
     isCameraFollowing.value = false
     isTacticalViewActive.value = false
 
@@ -61,21 +76,23 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
       return
     }
 
-    // ? store the starting positions for interpolation
+    // * Store the starting positions for smooth interpolation
     const startCamPos = camera.position.clone()
     const startTargetPos = controls.target.clone()
 
-    // ? create a proxy object for GSAP to animate its 'progress' property
+    // * Create a proxy object for GSAP to animate its 'progress' property from 0 to 1
     const proxy = { progress: 0 }
 
     focusAnimation = gsap.to(proxy, {
-      progress: 1, // ? animate progress (0 to 1)
+      progress: 1,
       duration: 1.5,
       ease: 'power3.inOut',
       onUpdate() {
+        // * Calculate the target positions for the end of the animation
         const endTargetPos = new Vector3()
         mesh.getWorldPosition(endTargetPos)
 
+        // * Calculate the ideal camera distance to fit the object in the view
         const fovInRadians = MathUtils.degToRad(camera.fov)
         const distanceToFit = sphere.radius / Math.tan(fovInRadians / 2)
         const finalDistance = distanceToFit * FOCAL_LENGTH_MULTIPLIER
@@ -86,46 +103,47 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
           endTargetPos.z + finalDistance,
         )
 
-        // ? interpolate camera and target positions (easing)
+        // * Use the 'progress' value to interpolate between start and end positions
         camera.position.copy(startCamPos).lerp(endCamPos, proxy.progress)
         controls.target.copy(startTargetPos).lerp(endTargetPos, proxy.progress)
 
-        updateCameraDistance()
+        setCameraDistance(camera.position.distanceTo(controls.target))
       },
       onComplete() {
+        // * Once the animation is complete, enable following mode
         isCameraFollowing.value = true
         mesh.getWorldPosition(lastTargetPosition)
+        // * Clear any outlines, as focus is the primary indicator
         outlinedObjects.value = []
         focusAnimation = null
-        updateCameraDistance()
+        setCameraDistance(camera.position.distanceTo(controls.target))
       },
     })
   }
+
   /**
-   * ~ Enter tactical view mode
+   * ~ Smoothly animates the camera to a high, top-down tactical view
    */
   const enterTacticalView = () => {
-    // ? kill existing animations
+    // * Kill existing animations
     if (focusAnimation)
       focusAnimation.kill()
     if (tacticalAnimation)
       tacticalAnimation.kill()
 
-    // ? store current camera state
+    // * Store the current camera state so we can return to it
     preTacticalCameraState.position.copy(camera.position)
     preTacticalCameraState.target.copy(controls.target)
     preTacticalCameraState.wasFollowing = isCameraFollowing.value
 
-    // ? reset following state
     isCameraFollowing.value = false
 
     const startCamPos = camera.position.clone()
     const startTargetPos = controls.target.clone()
 
-    // ? target position (looking at origin)
-    const endTargetPos = new Vector3(0, 0, 0)
-    // ? camera position (high above, looking down)
-    const endCamPos = new Vector3(0, TACTICAL_VIEW_HEIGHT, 0)
+    // * Define the end state for the tactical view
+    const endTargetPos = new Vector3(0, 0, 0) // ? look at the center of the solar system
+    const endCamPos = new Vector3(0, TACTICAL_VIEW_HEIGHT, 0) // ? position high above
 
     const proxy = { progress: 0 }
 
@@ -136,29 +154,27 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
       onUpdate() {
         camera.position.copy(startCamPos).lerp(endCamPos, proxy.progress)
         controls.target.copy(startTargetPos).lerp(endTargetPos, proxy.progress)
-        updateCameraDistance()
+        setCameraDistance(camera.position.distanceTo(controls.target))
       },
       onComplete() {
         isTacticalViewActive.value = true
         tacticalAnimation = null
-        updateCameraDistance()
+        setCameraDistance(camera.position.distanceTo(controls.target))
       },
     })
   }
 
   /**
-   * ~ Exit tactical view mode
-   * (return to previous camera state)
+   * ~ Smoothly animates the camera from the tactical view back to its previous state
    */
   const exitTacticalView = () => {
-    // ? kill existing animations
     if (tacticalAnimation)
       tacticalAnimation.kill()
 
     const startCamPos = camera.position.clone()
     const startTargetPos = controls.target.clone()
 
-    // ? return to stored state or initial position
+    // * Determine the state to return to
     const endCamPos = preTacticalCameraState.position.length() > 0
       ? preTacticalCameraState.position.clone()
       : new Vector3(cameraInitialPosition.x, cameraInitialPosition.y, cameraInitialPosition.z)
@@ -176,22 +192,22 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
       onUpdate() {
         camera.position.copy(startCamPos).lerp(endCamPos, proxy.progress)
         controls.target.copy(startTargetPos).lerp(endTargetPos, proxy.progress)
-        updateCameraDistance()
+        setCameraDistance(camera.position.distanceTo(controls.target))
       },
       onComplete() {
         isTacticalViewActive.value = false
-        // ? restore following state if it was active before
+        // * Restore following state if it was active before entering tactical view
         if (preTacticalCameraState.wasFollowing) {
           isCameraFollowing.value = true
         }
         tacticalAnimation = null
-        updateCameraDistance()
+        setCameraDistance(camera.position.distanceTo(controls.target))
       },
     })
   }
 
   /**
-   * ~ Toggle between tactical view and normal view
+   * ~ Toggles the camera between the normal view and the tactical view
    */
   const toggleTacticalView = () => {
     if (isTacticalViewActive.value) {
@@ -203,9 +219,10 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
   }
 
   /**
-   * ~Reset camera to initial position
+   * ~ Smoothly resets the camera to its initial default position and orientation
    */
   const resetCamera = () => {
+    // * Kill any active animations
     if (focusAnimation) {
       focusAnimation.kill()
       focusAnimation = null
@@ -215,6 +232,7 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
       tacticalAnimation = null
     }
 
+    // * Reset all state flags
     isCameraFollowing.value = false
     isTacticalViewActive.value = false
     controls.enabled = true
@@ -223,8 +241,31 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
     gsap.to(controls.target, { x: 0, y: 0, z: 0, duration: 1.5, ease: 'power3.inOut' })
   }
 
+  /**
+   * ~ Updates the camera position to follow the selected body
+   * This function should be called in the main animation loop
+   */
+  const update = () => {
+    // * Only update if following mode is active and a body is selected
+    if (isCameraFollowing.value && selectedBody.value?.mesh) {
+      const currentTargetPosition = new Vector3()
+      selectedBody.value.mesh.getWorldPosition(currentTargetPosition)
+
+      // * Calculate how much the target has moved since the last frame
+      const delta = new Vector3().subVectors(currentTargetPosition, lastTargetPosition)
+
+      // * Apply this delta to the camera's position to make it move with the target
+      camera.position.add(delta)
+
+      // * Update the orbit control's target to the new position
+      controls.target.copy(currentTargetPosition)
+
+      // * Store the new position for the next frame's calculation
+      lastTargetPosition.copy(currentTargetPosition)
+    }
+  }
+
   return {
-    cameraDistance: readonly(cameraDistance),
     isFollowing: isCameraFollowing,
     isTacticalView: isTacticalViewActive,
     lastTargetPosition,
@@ -233,5 +274,6 @@ export function useCameraManager(camera: PerspectiveCamera, controls: OrbitContr
     enterTacticalView,
     exitTacticalView,
     toggleTacticalView,
+    update,
   }
 }

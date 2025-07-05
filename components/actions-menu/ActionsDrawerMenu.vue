@@ -3,8 +3,8 @@ import type { CSSProperties } from 'vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import MenuAccordionBodies from '@/components/actions-menu/MenuAccordionBodies.vue'
 import MenuAccordionOrbits from '@/components/actions-menu/MenuAccordionOrbits.vue'
-import { useDebugActions } from '@/composables/useVisualisation'
-import { globalAxes, globalGrids, globalWireframe } from '@/composables/visualisationState'
+import { useDebugActions } from '~/composables/features/useVisualisation'
+import { globalAxes, globalGrids, globalWireframe } from '~/composables/state/visualisationState'
 import { colors } from '@/configs/colors.config'
 
 interface Props {
@@ -32,6 +32,13 @@ const {
   toggleGlobalAxes,
   toggleGlobalGrids,
 } = useDebugActions()
+
+// Add computed properties for safe color access
+const safeColors = computed(() => ({
+  white: colors?.white || '#FFFFFF',
+  black: colors?.black || '#000000',
+  springGreen: colors?.springGreen || '#00FF7F',
+}))
 
 function closeMenu() {
   emit('close')
@@ -167,7 +174,7 @@ const contentStyle = computed((): CSSProperties => {
 
 <style scoped>
 .drawer-content-wrapper {
-  color: v-bind('colors.white');
+  color: v-bind('safeColors.white');
   box-sizing: border-box;
   height: 100%;
   background: linear-gradient(135deg, rgba(20, 20, 20, 0.7), rgba(30, 30, 30, 0.6));
@@ -231,7 +238,7 @@ const contentStyle = computed((): CSSProperties => {
 .debug-button {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  color: v-bind('safeColors.white');
   padding: 10px 18px;
   cursor: pointer;
   border-radius: 4px;
@@ -269,6 +276,6 @@ const contentStyle = computed((): CSSProperties => {
 .close-button:hover,
 .close-button:focus {
   background-color: v-bind('props.menuColor');
-  color: #000000;
+  color: v-bind('safeColors.black');
 }
 </style>

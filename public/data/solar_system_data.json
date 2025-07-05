@@ -53,8 +53,8 @@
         "clouds": "/textures/8k_earth_clouds.jpg",
         "rings": "",
         "atmosphere": "",
-        "specular": "/textures/8k_earth_specular_map.jpg",
-        "normal": "/textures/8k_earth_normal_map.jpg"
+        "specular": "/textures/8k_earth_specular_map.png",
+        "normal": "/textures/8k_earth_normal_map.png"
       },
       "physicalProps": {
         "meanRadius": "6371",
@@ -82,10 +82,12 @@
         "inclinationUnit": "degrees",
         "orbitalPeriod": "365.256",
         "orbitalPeriodUnit": "days",
-        "longAscendingNode": "-11.26",
+        "longAscendingNode": "0",
         "longAscendingNodeUnit": "degrees",
-        "argOfPerihelion": "114.2",
-        "argOfPerihelionUnit": "degrees",
+        "longPerihelion": "102.9",
+        "longPerihelionUnit": "degrees",
+        "argOfPeriapsis": "288.1",
+        "argOfPeriapsisUnit": "degrees",
         "meanAnomaly": "357.52",
         "meanAnomalyUnit": "degrees"
       },
@@ -122,7 +124,7 @@
             "rings": []
           },
           "orbitalProps": {
-            "semiMajorAxis": "384400",
+            "semiMajorAxis": "384748",
             "semiMajorAxisUnit": "km",
             "eccentricity": "0.0549",
             "eccentricityUnit": "unitless",
