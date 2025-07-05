@@ -1,5 +1,5 @@
 import type { AxesHelper, GridHelper, Line, Mesh, Object3D } from 'three'
-import type { Line2 } from 'three/addons/lines/Line2.js'
+// import type { Line2 } from 'three/addons/lines/Line2.js'
 
 export interface CelestialTextures {
   main: string
@@ -88,7 +88,7 @@ export interface OrbitState {
   name: string
   bodyId: string
   pivot: Object3D
-  lineMesh?: Line2
+  lineMesh?: Line
   orbitalHelperHost: Object3D
   hasAxesHelpers: boolean
   hasGridHelpers: boolean
@@ -98,4 +98,4 @@ export interface OrbitState {
 
 // UI-specific type
 export type CelestialBodyUIState = Omit<CelestialBodyState, 'mesh' | 'axesHelper' | 'gridHelper'>
-export type OrbitUIState = Omit<OrbitState, 'bodyId' | 'pivot' | 'axesHelper' | 'gridHelper' | 'orbitalHelperHost'>
+export type OrbitUIState = Omit<OrbitState, 'bodyId' | 'pivot' | 'lineMesh' | 'axesHelper' | 'gridHelper' | 'orbitalHelperHost'>
