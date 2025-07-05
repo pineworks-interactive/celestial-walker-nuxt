@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import MenuAccordionCheckbox from '@/components/actions-menu/MenuAccordionCheckbox.vue'
-import { useDebugActions } from '@/composables/useVisualisation'
-import { celestialBodiesForUI } from '@/composables/visualisationState'
+import { useDebugActions } from '~/composables/features/useVisualisation'
+import { celestialBodiesForUI } from '~/composables/state/visualisationState'
 
 const {
   toggleBodyWireframe,

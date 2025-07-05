@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { gsap } from 'gsap'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { isInfoWindowOpen, selectedBody } from '@/composables/interactionState'
+import { isInfoWindowOpen, selectedBody } from '~/composables/state/interactionState'
 import { colors as colorConfig } from '@/configs/colors.config'
 
 const colors = ref(colorConfig)
@@ -116,8 +116,13 @@ onMounted(() => {
   gsap.set(infoWindowRef.value, { maxHeight: 0 })
 })
 
-// eslint-disable-next-line style/max-statements-per-line
-function closeWindow() { isInfoWindowOpen.value = false }
+function closeWindow(event?: MouseEvent) {
+  if (event) {
+    event.stopPropagation()
+    event.preventDefault()
+  }
+  isInfoWindowOpen.value = false
+}
 const bodyDescription = computed(() => selectedBody.value?.description || 'No celestial body selected.')
 const bodyName = computed(() => selectedBody.value?.name || 'No celestial body selected.')
 </script>

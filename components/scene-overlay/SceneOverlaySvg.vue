@@ -8,9 +8,9 @@ import CornerNW from '@/components/scene-overlay/corners/CornerNW.vue'
 import CornerSE from '@/components/scene-overlay/corners/CornerSE.vue'
 import CornerSW from '@/components/scene-overlay/corners/CornerSW.vue'
 import ExitFocusPrompt from '@/components/scene-overlay/ExitFocusPrompt.vue'
-import ZoomLevel from '@/components/scene-overlay/zoom-level/ZoomLevelField.vue'
-import { isCameraFollowing, isTacticalViewActive, selectedBody } from '@/composables/interactionState'
-import { toggleTacticalView } from '@/composables/useTacticalView'
+import ZoomLevel from '~/components/scene-overlay/zoom-level/ZoomLevelField.vue'
+import { isCameraFollowing, isTacticalViewActive, selectedBody } from '~/composables/state/interactionState'
+import { toggleTacticalView } from '~/composables/features/useTacticalView'
 import { colors } from '@/configs/colors.config'
 
 // * ViewBox's Overlay

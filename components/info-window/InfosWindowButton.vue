@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { isInfoWindowOpen } from '@/composables/interactionState'
+import { isInfoWindowOpen } from '~/composables/state/interactionState'
 import { colors } from '@/configs/colors.config'
 
-function onToggle() {
+function onToggle(event: MouseEvent) {
+  // Prevent the click from propagating to the canvas behind
+  event.stopPropagation()
+  event.preventDefault()
+
   isInfoWindowOpen.value = !isInfoWindowOpen.value
 }
 </script>
