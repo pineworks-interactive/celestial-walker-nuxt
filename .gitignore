@@ -13,6 +13,9 @@ node_modules
 logs
 *.log
 
+# Cursor
+.cursor/
+
 # Misc
 .DS_Store
 .fleet
