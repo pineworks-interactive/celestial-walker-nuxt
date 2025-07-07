@@ -15,7 +15,7 @@ interface OrbitalElements {
   /**
    * Inclination of the orbit in degrees, relative to the original reference plane (e.g., the ecliptic).
    */
-  inclination: number
+  orbitalInclination: number
   /**
    * Longitude of the ascending node in degrees, relative to the original reference plane.
    * This defines the direction of the point where the orbit crosses the reference plane going upwards.
@@ -31,7 +31,7 @@ interface ConvertedOrbitalElements {
   /**
    * The new inclination in degrees, relative to the new reference plane (e.g., the Sun's equator).
    */
-  newInclination: number
+  newOrbitalInclination: number
   /**
    * The new longitude of the ascending node in degrees, relative to the new reference plane.
    */
@@ -53,7 +53,7 @@ export function useCoordinateConversion(
   newPlaneInclination: number,
 ): ConvertedOrbitalElements {
   // * Convert all input angles from degrees to radians, as required by JavaScript's Math functions
-  const iOld = MathUtils.degToRad(elements.inclination)
+  const iOld = MathUtils.degToRad(elements.orbitalInclination)
   const longOld = MathUtils.degToRad(elements.longAscendingNode)
   const iNewPlane = MathUtils.degToRad(newPlaneInclination)
 
@@ -69,7 +69,7 @@ export function useCoordinateConversion(
 
   // * Convert the results from radians back to degrees before returning
   return {
-    newInclination: MathUtils.radToDeg(iNew),
+    newOrbitalInclination: MathUtils.radToDeg(iNew),
     newLongAscendingNode: MathUtils.radToDeg(longNew),
   }
 }

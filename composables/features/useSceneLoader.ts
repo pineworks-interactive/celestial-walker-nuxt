@@ -1,11 +1,11 @@
 /**
  * @module useSceneLoader
  * @description This module is responsible for orchestrating the creation of the entire solar system scene.
- * It fetches the necessary data and then uses various factories to build the sun, planets, moons,
+ * It fetches the necessary data and then uses various factories to build the sun, planets, satellites,
  * and their respective orbits, assembling them into the correct hierarchical structure.
  */
 import type { Object3D, Scene } from 'three'
-import type { Planet, SolarSystemData, Sun } from '@/types/solarSystem.types'
+import type { Planet, Satellite, SolarSystemData, Sun } from '@/types/solarSystem.types'
 import * as THREE from 'three'
 
 import { useSolarSystemData } from '@/composables/data/useSolarSystemData'
@@ -13,7 +13,6 @@ import { useCelestialBodyFactory } from '@/composables/factories/useCelestialBod
 import { useOrbitFactory } from '@/composables/factories/useOrbitFactory'
 import { useDebugActions } from '@/composables/features/useVisualisation'
 import { useCoordinateConversion } from '@/composables/utils/useCoordinateConversion'
-import { scaleFactors } from '@/configs/scaling.config'
 
 /**
  * # Provides a `load` function to asynchronously build the entire scene
@@ -22,7 +21,7 @@ import { scaleFactors } from '@/configs/scaling.config'
  */
 export function useSceneLoader() {
   const { data: solarSystemData, loadData: loadSolarSystemData } = useSolarSystemData()
-  const { createSun, createPlanet, createMoon } = useCelestialBodyFactory()
+  const { createSun, createPlanet, createSatellite } = useCelestialBodyFactory()
   const { createOrbit, createOrbitLine } = useOrbitFactory()
   const { registerCelestialBody, registerOrbit } = useDebugActions()
 
@@ -40,7 +39,7 @@ export function useSceneLoader() {
       }
     }
     catch (error) {
-      console.error('Error loading scene data:', error)
+      console.error('%c[SCENELOADER] Error loading scene data:', 'color: red; font-weight: bold;', error)
     }
   }
 
@@ -69,35 +68,41 @@ export function useSceneLoader() {
 
     // * Iterate through all planets and create them
     for (const planetData of Object.values(solarSystemData.planets)) {
-      await _createPlanet(planetData, scene, sunRadius)
+      try {
+        await _createPlanet(planetData, scene, sunRadius)
+        console.warn(`%c[SCENELOADER] Planet created: ${planetData.name}`, 'color: green; font-weight: bold;')
+      }
+      catch (error) {
+        console.error(`%c[SCENELOADER] Failed to create planet: ${planetData.name}`, 'color: red; font-weight: bold;', error)
+      }
     }
   }
 
   /**
-   * ~ Creates a moon, its orbit, and attaches it to its parent planet's system
+   * ~ Creates a satellite, its orbit, and attaches it to its parent planet's system
    *
    * @private
-   * @param {Planet} moonData - The data for the moon
+   * @param {Satellite} satelliteData - The data for the satellite
    * @param {THREE.Object3D} parentSystem - The `Object3D` container of the parent planet's system
    * @param {number} parentRadius - The scaled radius of the parent planet, used to offset the moon's orbit
    */
-  async function _createMoon(moonData: Planet, parentSystem: THREE.Object3D, parentRadius: number) {
-    const moonMesh = await createMoon(moonData)
-    moonMesh.name = moonData.name
-    moonMesh.userData = {
-      id: moonData.id,
+  async function _createSatellite(satelliteData: Satellite, parentSystem: THREE.Object3D, parentRadius: number) {
+    const satelliteMesh = await createSatellite(satelliteData)
+    satelliteMesh.name = satelliteData.name
+    satelliteMesh.userData = {
+      id: satelliteData.id,
       type: 'celestial-body',
     }
-    registerCelestialBody(moonData.id, moonData.name, moonData.description, moonMesh)
+    registerCelestialBody(satelliteData.id, satelliteData.name, satelliteData.description, satelliteMesh)
 
     // * --- Orbit Creation ---
-    const orbitalDistance = Number.parseFloat(moonData.orbitalProps.semiMajorAxis)
-    const orbitalInclination = Number.parseFloat(moonData.orbitalProps.inclination)
-    const longAscendingNode = Number.parseFloat(moonData.orbitalProps.longAscendingNode)
+    const orbitalDistance = Number.parseFloat(satelliteData.orbitalProps.semiMajorAxis)
+    const orbitalInclination = Number.parseFloat(satelliteData.orbitalProps.orbitalInclination)
+    const longAscendingNode = Number.parseFloat(satelliteData.orbitalProps.longAscendingNode)
 
     // * 1. Create the orbital plane, which handles the longitude of the ascending node (rotation around the Y-axis)
     const orbitalPlane = new THREE.Object3D()
-    orbitalPlane.name = `${moonData.name} Orbital Plane`
+    orbitalPlane.name = `${satelliteData.name} Orbital Plane`
     orbitalPlane.rotation.y = THREE.MathUtils.degToRad(longAscendingNode)
 
     // * 2. Create the orbit pivot, which handles the inclination (rotation around the X-axis)
@@ -105,27 +110,27 @@ export function useSceneLoader() {
       orbitalDistance,
       parentRadius, // ? use parent's radius to offset the orbit from its surface
       1, // ? placeholder speed
-      `${moonData.name} Orbit`,
+      `${satelliteData.name} Orbit`,
     )
     orbitPivot.rotation.x = THREE.MathUtils.degToRad(orbitalInclination)
 
     // * 3. Create the visual line for the orbit path
     const orbitRadiusForLine = orbitPivot.userData.orbitRadius
     const orbitLine = createOrbitLine(orbitRadiusForLine)
-    orbitLine.name = `${moonData.name} Orbit Line`
-    orbitLine.userData = { id: `${moonData.id}_orbit` } // ? add ID for raycaster interaction
+    orbitLine.name = `${satelliteData.name} Orbit Line`
+    orbitLine.userData = { id: `${satelliteData.id}_orbit` } // ? add ID for raycaster interaction
 
     // * 4. Assemble the hierarchy: moon -> pivot -> plane -> parent system
-    orbitPivot.add(moonMesh)
+    orbitPivot.add(satelliteMesh)
     orbitPivot.add(orbitLine)
     orbitalPlane.add(orbitPivot)
     parentSystem.add(orbitalPlane) // ? add the moon's entire system to the parent's system group
 
     // * 5. Register the orbit for debugging tools
     registerOrbit(
-      `${moonData.id}_orbit`,
-      `${moonData.name} Orbit`,
-      moonData.id,
+      `${satelliteData.id}_orbit`,
+      `${satelliteData.name} Orbit`,
+      satelliteData.id,
       orbitPivot,
       orbitRadiusForLine,
       orbitalInclination,
@@ -134,7 +139,7 @@ export function useSceneLoader() {
   }
 
   /**
-   * ~ Creates a planet, its orbit, its moons, and adds them to the scene
+   * ~ Creates a planet, its orbit, its satellites, and adds them to the scene
    *
    * @private
    * @param {Planet} planetData - The data for the planet.
@@ -154,7 +159,7 @@ export function useSceneLoader() {
     // * 1. Convert orbital elements from the solar system's invariable plane to the Sun's equatorial plane for accurate visualization
     const sunAxialTilt = Number.parseFloat(solarSystemData.value!.sun.physicalProps.axialTilt)
     const originalElements = {
-      inclination: Number.parseFloat(planetData.orbitalProps.inclination),
+      orbitalInclination: Number.parseFloat(planetData.orbitalProps.orbitalInclination),
       longAscendingNode: Number.parseFloat(planetData.orbitalProps.longAscendingNode),
     }
     const converted = useCoordinateConversion(originalElements, sunAxialTilt)
@@ -162,7 +167,7 @@ export function useSceneLoader() {
     const orbitData = {
       distance: Number.parseFloat(planetData.orbitalProps.semiMajorAxis),
       speed: 1,
-      inclination: converted.newInclination,
+      orbitalInclination: converted.newOrbitalInclination,
       longAscendingNode: converted.newLongAscendingNode,
     }
 
@@ -173,7 +178,7 @@ export function useSceneLoader() {
 
     // * 3. Create the orbit pivot for inclination
     const orbit = createOrbit(orbitData.distance, sunRadius, orbitData.speed, `${planetData.name} Orbit`)
-    orbit.rotation.x = THREE.MathUtils.degToRad(orbitData.inclination)
+    orbit.rotation.x = THREE.MathUtils.degToRad(orbitData.orbitalInclination)
 
     // * 4. Create the visual orbit line
     const orbitRadius = orbit.userData.orbitRadius
@@ -182,7 +187,7 @@ export function useSceneLoader() {
     orbitLine.userData = { id: `${planetData.id}_orbit` } // ? add ID for raycaster interaction
 
     // * 5. Assemble the hierarchy. This is a crucial step for interaction handling.
-    // * We create a "system" container so that the planet mesh and its moons are siblings.
+    // * We create a "system" container so that the planet mesh and its satellites are siblings.
     // * This prevents outlining the parent from also outlining all its children.
     const planetSystem = new THREE.Object3D()
     planetSystem.name = `${planetData.name} System`
@@ -200,19 +205,19 @@ export function useSceneLoader() {
       planetData.id,
       orbit,
       orbitRadius,
-      orbitData.inclination,
+      orbitData.orbitalInclination,
       orbitLine,
     )
 
-    // * 7. Create moons for this planet, if any
-    if (planetData.moons) {
+    // * 7. Create satellites for this planet, if any
+    if (planetData.satellites) {
       if (!planetMesh.geometry.boundingSphere) {
         planetMesh.geometry.computeBoundingSphere()
       }
       const planetRadius = planetMesh.geometry.boundingSphere!.radius
-      // * Pass the `planetSystem` container as the parent for the moons
-      for (const moonData of Object.values(planetData.moons)) {
-        await _createMoon(moonData, planetSystem, planetRadius)
+      // * Pass the `planetSystem` container as the parent for satellites
+      for (const satelliteData of Object.values(planetData.satellites)) {
+        await _createSatellite(satelliteData, planetSystem, planetRadius)
       }
     }
   }

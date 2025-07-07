@@ -1,10 +1,10 @@
 /**
  * @module useCelestialBodyFactory
- * @description A factory module for creating 3JS meshes for celestial bodies like the Sun, planets, and moons
+ * @description A factory module for creating 3JS meshes for celestial bodies like the Sun, planets, and satellites
  * It handles the creation of geometries, loading of textures, and configuration of materials,
  * including complex custom shaders for effects like Earth's day/night cycle
  */
-import type { CelestialBody, Planet, Sun } from '@/types/solarSystem.types'
+import type { CelestialBody, Planet, Satellite, Sun } from '@/types/solarSystem.types'
 import * as THREE from 'three'
 import { ref } from 'vue'
 import { colors } from '@/configs/colors.config'
@@ -74,12 +74,12 @@ export function useCelestialBodyFactory() {
 
   /**
    * ~ A generic function to create a celestial body mesh with standard materials and textures
-   * This is used as a base for planets and moons
+   * This is used as a base for planets and satellites
    *
-   * @param {CelestialBody} body - The data object containing properties for the celestial body
+   * @param {Sun | Planet | Satellite} body - The data object containing properties for the celestial body
    * @returns {Promise<THREE.Mesh>} A promise that resolves with the created 3JS Mesh object
    */
-  const createCelestialBody = async (body: CelestialBody): Promise<THREE.Mesh> => {
+  const createCelestialBody = async (body: Sun | Planet | Satellite): Promise<THREE.Mesh> => {
     const radius = Number.parseFloat(body.physicalProps.meanRadius)
     const geometry = createSphereGeometry(radius, 64, body.name)
     // * Computing the bounding sphere is important for raycasting and camera calculations
@@ -152,7 +152,8 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ~ Creates the Sun mesh. The Sun uses a `MeshBasicMaterial` because it should not be affected by scene lighting
+   * ~ Creates the Sun mesh
+   * The Sun uses a `MeshBasicMaterial` because it should not be affected by scene lighting
    *
    * @param {Sun} sunData - The data object for the Sun
    * @returns {Promise<THREE.Mesh>} A promise that resolves with the created Sun mesh
@@ -177,7 +178,8 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ~ Creates a planet mesh, including special customizations for Earth (clouds, day/night shader)
+   * ~ Creates a planet mesh
+   * including special customizations for Earth (clouds, day/night shader)
    *
    * @param {Planet} planetData - The data object for the planet
    * @returns {Promise<THREE.Mesh>} A promise that resolves with the created planet mesh
@@ -204,7 +206,7 @@ export function useCelestialBodyFactory() {
         const cloudMaterial = new THREE.MeshStandardMaterial({
           alphaMap: cloudTexture, // ? use the texture for transparency.
           transparent: true,
-          opacity: 0.4,
+          opacity: 0.6,
         })
         const cloudMesh = new THREE.Mesh(cloudGeometry, cloudMaterial)
         cloudMesh.name = 'EarthClouds'
@@ -259,6 +261,28 @@ export function useCelestialBodyFactory() {
         planetMaterial.userData.shader = shader
       }
     }
+    else if (planetData.name.toLowerCase() === 'venus') {
+      planetMaterial.roughness = 0.9
+      planetMaterial.metalness = 0.1
+
+      // * Add a second, slightly larger sphere for the atmosphere layer
+      if (planetData.textures.atmosphere) {
+        const atmosphereTexture = await loadTexture(planetData.textures.atmosphere)
+        const atmosphereGeometry = createSphereGeometry(
+          Number.parseFloat(planetData.physicalProps.meanRadius) * 1.01, // ? larger than Venus
+          64,
+        )
+        const atmosphereMaterial = new THREE.MeshBasicMaterial({
+          map: atmosphereTexture, // ? use the texture for transparency.
+          transparent: true,
+          opacity: 0.5,
+        })
+        const atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial)
+        atmosphereMesh.name = 'VenusAtmosphere'
+        // atmosphereMesh.castShadow = true // ? atmosphere should cast shadows on the planet. (maybe not)
+        planetMesh.add(atmosphereMesh)
+      }
+    }
     else {
       // * Default material properties for other planets
       planetMaterial.roughness = 0.8
@@ -270,19 +294,19 @@ export function useCelestialBodyFactory() {
   }
 
   /**
-   * ~ Creates a moon mesh with simple material properties
+   * ~ Creates a satellite mesh
    *
-   * @param {Planet} moonData - The data object for the moon
-   * @returns {Promise<THREE.Mesh>} A promise that resolves with the created moon mesh
+   * @param {Satellite} satelliteData - The data object for the satellite
+   * @returns {Promise<THREE.Mesh>} A promise that resolves with the created satellite mesh
    */
-  const createMoon = async (moonData: Planet): Promise<THREE.Mesh> => {
-    const moonMesh = await createCelestialBody(moonData)
-    // * Moons are generally less reflective and non-metallic
-    const moonMaterial = moonMesh.material as THREE.MeshStandardMaterial
-    moonMaterial.roughness = 0.9
-    moonMaterial.metalness = 0.1
-    moonMaterial.needsUpdate = true
-    return moonMesh
+  const createSatellite = async (satelliteData: Satellite): Promise<THREE.Mesh> => {
+    const satelliteMesh = await createCelestialBody(satelliteData)
+    // * Satellites are generally less reflective and non-metallic
+    const satelliteMaterial = satelliteMesh.material as THREE.MeshStandardMaterial
+    satelliteMaterial.roughness = 0.9
+    satelliteMaterial.metalness = 0.1
+    satelliteMaterial.needsUpdate = true
+    return satelliteMesh
   }
 
   /**
@@ -306,7 +330,7 @@ export function useCelestialBodyFactory() {
   return {
     createSun,
     createPlanet,
-    createMoon,
+    createSatellite,
     cleanup,
   }
 }
