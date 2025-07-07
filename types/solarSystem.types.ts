@@ -29,12 +29,12 @@ export interface PhysicalProperties {
   escapeVelocity: string
   escapeVelocityUnit: string
   surfaceMinTemperature: string
-  surfaceMidTemperature: string
+  surfaceMeanTemperature: string
   surfaceMaxTemperature: string
   surfaceTemperatureUnit: string
   distanceFromSun: string
   distanceFromSunUnit: string
-  rings: string[]
+  rings: object
 }
 
 export interface OrbitalProperties {
