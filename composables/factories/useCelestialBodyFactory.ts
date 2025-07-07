@@ -261,6 +261,28 @@ export function useCelestialBodyFactory() {
         planetMaterial.userData.shader = shader
       }
     }
+    else if (planetData.name.toLowerCase() === 'venus') {
+      planetMaterial.roughness = 0.9
+      planetMaterial.metalness = 0.1
+
+      // * Add a second, slightly larger sphere for the atmosphere layer
+      if (planetData.textures.atmosphere) {
+        const atmosphereTexture = await loadTexture(planetData.textures.atmosphere)
+        const atmosphereGeometry = createSphereGeometry(
+          Number.parseFloat(planetData.physicalProps.meanRadius) * 1.01, // ? larger than Venus
+          64,
+        )
+        const atmosphereMaterial = new THREE.MeshBasicMaterial({
+          map: atmosphereTexture, // ? use the texture for transparency.
+          transparent: true,
+          opacity: 0.5,
+        })
+        const atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial)
+        atmosphereMesh.name = 'VenusAtmosphere'
+        // atmosphereMesh.castShadow = true // ? atmosphere should cast shadows on the planet. (maybe not)
+        planetMesh.add(atmosphereMesh)
+      }
+    }
     else {
       // * Default material properties for other planets
       planetMaterial.roughness = 0.8
