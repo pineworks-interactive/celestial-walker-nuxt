@@ -1,5 +1,4 @@
 import type { AxesHelper, GridHelper, Line, Mesh, Object3D } from 'three'
-// import type { Line2 } from 'three/addons/lines/Line2.js'
 
 export interface CelestialTextures {
   main: string
@@ -15,30 +14,44 @@ export interface CelestialTextures {
 export interface PhysicalProperties {
   meanRadius: string
   meanRadiusUnit: string
-  polarRadius: string
-  polarRadiusUnit: string
   axialTilt: string
   axialTiltUnit: string
-  rotationPeriod: string
-  rotationPeriodUnit: string
   mass: string
   massUnit: string
   density: string
   densityUnit: string
+  lengthOfDay: string
+  lengthOfDayUnit: string
+  rotationPeriod: string
+  rotationPeriodUnit: string
   surfaceGravity: string
   surfaceGravityUnit: string
+  escapeVelocity: string
+  escapeVelocityUnit: string
+  surfaceMinTemperature: string
+  surfaceMidTemperature: string
+  surfaceMaxTemperature: string
+  surfaceTemperatureUnit: string
+  distanceFromSun: string
+  distanceFromSunUnit: string
   rings: string[]
 }
 
 export interface OrbitalProperties {
+  aphelion: string
+  aphelionUnit: string
+  perihelion: string
+  perihelionUnit: string
   semiMajorAxis: string
   semiMajorAxisUnit: string
-  eccentricity: string
-  eccentricityUnit: string
-  inclination: string
-  inclinationUnit: string
+  orbitalEccentricity: string
+  orbitalEccentricityUnit: string
+  orbitalInclination: string
+  orbitalInclinationUnit: string
   orbitalPeriod: string
   orbitalPeriodUnit: string
+  orbitalVelocity: string
+  orbitalVelocityUnit: string
   longAscendingNode: string
   longAscendingNodeUnit: string
   argOfPerihelion: string
@@ -55,11 +68,20 @@ export interface CelestialBody {
   textures: CelestialTextures
   physicalProps: PhysicalProperties
   orbitalProps: OrbitalProperties
-  moons: { [key: string]: Moon }
+  satellites?: { [key: string]: Satellite }
   mesh?: Mesh
 }
 
-export interface Moon extends CelestialBody {}
+export type Satellite = Omit<CelestialBody, 'physicalProps' | 'orbitalProps' | 'satellites'> & {
+  physicalProps: Omit<PhysicalProperties, 'distanceFromSun' | 'distanceFromSunUnit'> & {
+    distanceFromPrimary: string
+    distanceFromPrimaryUnit: string
+  }
+  orbitalProps: Omit<OrbitalProperties, 'argOfPerihelion' | 'argOfPerihelionUnit'> & {
+    argOfPerigee: string
+    argOfPerigeeUnit: string
+  }
+}
 
 export interface Planet extends CelestialBody {}
 
