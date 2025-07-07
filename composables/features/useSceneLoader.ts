@@ -13,7 +13,6 @@ import { useCelestialBodyFactory } from '@/composables/factories/useCelestialBod
 import { useOrbitFactory } from '@/composables/factories/useOrbitFactory'
 import { useDebugActions } from '@/composables/features/useVisualisation'
 import { useCoordinateConversion } from '@/composables/utils/useCoordinateConversion'
-import { scaleFactors } from '@/configs/scaling.config'
 
 /**
  * # Provides a `load` function to asynchronously build the entire scene
@@ -40,7 +39,7 @@ export function useSceneLoader() {
       }
     }
     catch (error) {
-      console.error('Error loading scene data:', error)
+      console.error('%c[SCENELOADER] Error loading scene data:', 'color: red; font-weight: bold;', error)
     }
   }
 
@@ -69,7 +68,13 @@ export function useSceneLoader() {
 
     // * Iterate through all planets and create them
     for (const planetData of Object.values(solarSystemData.planets)) {
-      await _createPlanet(planetData, scene, sunRadius)
+      try {
+        await _createPlanet(planetData, scene, sunRadius)
+        console.warn(`%c[SCENELOADER] Planet created: ${planetData.name}`, 'color: green; font-weight: bold;')
+      }
+      catch (error) {
+        console.error(`%c[SCENELOADER] Failed to create planet: ${planetData.name}`, 'color: red; font-weight: bold;', error)
+      }
     }
   }
 
