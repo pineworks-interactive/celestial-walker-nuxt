@@ -157,13 +157,13 @@ const { data, loading, error, loadData } = useSolarSystemData()
 await loadData()
 ```
 
-**Data Structure**: Provides access to sun, planets, moons, and their properties (physical, orbital, textures).
+**Data Structure**: Provides access to sun, planets, satellites, and their properties (physical, orbital, textures).
 
 ## Factories
 
 ### useCelestialBodyFactory.ts
 
-**Purpose**: Creates 3JS meshes for celestial bodies (planets, stars, moons).
+**Purpose**: Creates 3JS meshes for celestial bodies (planets, stars, satellites).
 
 **Key Features**:
 
