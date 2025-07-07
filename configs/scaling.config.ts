@@ -9,7 +9,7 @@ export const scaleFactors = {
   // ? So, 1 3JS unit = 0.01 AU
   orbitalDistanceAuPerUnit: 0.004,
 
-  // ? 100,000 km = 1 3JS unit (for moons)
+  // ? 100,000 km = 1 3JS unit (for satellites)
   localOrbitalDistanceKmPerUnit: 100000,
 }
 

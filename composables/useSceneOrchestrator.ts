@@ -191,7 +191,7 @@ export function useSceneOrchestrator(options: SceneManagerOptions): SceneManager
     const { starfield: createdStarfield } = useStarfield(scene, starfieldConfig)
     starfield.value = createdStarfield
 
-    // * Load all celestial bodies, orbits, moons, etc., using the scene loader
+    // * Load all celestial bodies, orbits, satellites, etc., using the scene loader
     await loadScene(scene)
 
     // * Initialize the simulation manager with the now-loaded data

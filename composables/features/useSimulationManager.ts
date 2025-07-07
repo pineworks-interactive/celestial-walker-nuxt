@@ -87,17 +87,17 @@ export function useSimulationManager() {
 
     orbitalDataMap.clear()
 
-    // * Extract and store the orbital period for each planet and moon
+    // * Extract and store the orbital period for each planet and satellite
     for (const planetData of Object.values(solarSystemData.value.planets)) {
       if (planetData.orbitalProps?.orbitalPeriod) {
         orbitalDataMap.set(planetData.id, {
           orbitalPeriod: Number.parseFloat(planetData.orbitalProps.orbitalPeriod),
         })
       }
-      for (const moonData of Object.values(planetData.moons || {})) {
-        if (moonData.orbitalProps?.orbitalPeriod) {
-          orbitalDataMap.set(moonData.id, {
-            orbitalPeriod: Number.parseFloat(moonData.orbitalProps.orbitalPeriod),
+      for (const satelliteData of Object.values(planetData.satellites || {})) {
+        if (satelliteData.orbitalProps?.orbitalPeriod) {
+          orbitalDataMap.set(satelliteData.id, {
+            orbitalPeriod: Number.parseFloat(satelliteData.orbitalProps.orbitalPeriod),
           })
         }
       }
